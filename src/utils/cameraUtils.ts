@@ -1,5 +1,6 @@
 import { getModule, PlaceModule } from '@placeos/ts-client';
 import { firstValueFrom } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { CameraPreview } from '../types';
 
 const DOMAIN = 'placeos-prod.avit.it.ucla.edu';
@@ -10,29 +11,40 @@ export const getActiveNDIInputs = async (systemId: string, moduleReferenceName: 
         const module = getModule(systemId, moduleReferenceName);
         const activeInputs: number[] = [];
 
-        for (let i = 1; i <= 6; i++) {
+        // Check all 6 inputs in parallel
+        const checks = Array.from({ length: 6 }, (_, i) => i + 1).map(async (i) => {
             const statusKey = `NDI${i}_video_status`;
             try {
                 const binding = module.binding(statusKey);
-
-                // Bind to establish the connection
                 binding.bind();
 
-                // Listen and get first value (automatically unsubscribes)
-                const value = await firstValueFrom(binding.listen());
+                // Wait for first boolean value (skip undefined)
+                const value = await firstValueFrom(
+                    binding.listen().pipe(
+                        filter((v) => typeof v === 'boolean')
+                    )
+                );
 
                 console.log(`[getActiveNDIInputs] ${statusKey} = ${value}`);
-
-                if (value === true) {
-                    activeInputs.push(i);
-                    console.log(`[getActiveNDIInputs] ✅ Added NDI${i} to active inputs`);
-                }
+                return { input: i, active: value === true };
             } catch (err) {
                 console.log(`[getActiveNDIInputs] ⚠️ ${statusKey} does not exist or failed to fetch`);
+                return { input: i, active: false };
             }
-        }
+        });
 
-        console.log(`[getActiveNDIInputs] Final active inputs:`, activeInputs);
+        // Wait for all checks to complete
+        const results = await Promise.all(checks);
+
+        // Collect active inputs
+        results.forEach(({ input, active }) => {
+            if (active) {
+                activeInputs.push(input);
+                console.log(`[getActiveNDIInputs] ✅ Added NDI${input} to active inputs`);
+            }
+        });
+
+        console.log(`[getActiveNDIInputs] Final active inputs:`, activeInputs.sort((a, b) => a - b));
         return activeInputs.sort((a, b) => a - b);
     } catch (err) {
         console.error(`[getActiveNDIInputs] ERROR:`, err);

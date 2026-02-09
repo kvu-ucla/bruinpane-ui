@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CameraPreview } from '../types';
 
@@ -7,8 +8,17 @@ interface CameraPreviewGridProps {
 }
 
 export default function CameraPreviewGrid({ previews, systemId }: CameraPreviewGridProps) {
+    const [refreshKey, setRefreshKey] = useState(0);
     const displayedPreviews = previews.slice(0, 3);
     const remainingCount = previews.length - 3;
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setRefreshKey(prev => prev + 1);
+        }, 3000); // Refresh every 3 seconds
+
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <div className="flex-shrink-0">
@@ -20,7 +30,7 @@ export default function CameraPreviewGrid({ previews, systemId }: CameraPreviewG
                         className="w-48 h-48 rounded-lg overflow-hidden bg-base-300 relative group hover:ring-4 hover:ring-primary transition-all"
                     >
                         <img
-                            src={preview.url}
+                            src={`${preview.url}&t=${refreshKey}`}
                             alt={preview.label}
                             className="w-full h-full object-cover"
                         />
