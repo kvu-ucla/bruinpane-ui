@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { getSystemById, getSystemModules } from '../services/placeos';
-import { PlaceSystem, PlaceModule } from '@placeos/ts-client';
+import { PlaceSystem, PlaceModule, getModule } from '@placeos/ts-client';
 import { generateCameraPreviews } from '../utils/cameraUtils';
+import { firstValueFrom, race, timer } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
+import StreamPlayer from '../components/StreamPlayer';
 import PTZControls from '../components/PTZControls';
 import CameraSelector from '../components/CameraSelector';
 import { CameraPreview } from '../types';
@@ -14,46 +17,40 @@ interface LocationState {
     cameraPreviews?: CameraPreview[];
 }
 
+interface CameraChannelMapping {
+    cameraModule: string;
+    ndiInput: number;
+    channelId: string | null;
+    channelName: string | null;
+}
+
 export default function SystemDetail() {
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
     const locationState = location.state as LocationState | null;
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // Try to get from location state first
     const [system, setSystem] = useState<PlaceSystem | null>(locationState?.system || null);
     const [modules, setModules] = useState<PlaceModule[]>(locationState?.modules || []);
     const [cameraPreviews, setCameraPreviews] = useState<CameraPreview[]>(locationState?.cameraPreviews || []);
+    const [channelMappings, setChannelMappings] = useState<CameraChannelMapping[]>([]);
     const [loading, setLoading] = useState(!locationState?.system);
     const [error, setError] = useState<string | null>(null);
     const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
-    const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
-        // Only fetch if we don't have data from state
         if (id && !locationState?.system) {
             void loadSystem(id);
         }
     }, [id, locationState]);
 
     useEffect(() => {
-        // Only generate camera previews if we don't have them from state
         if (system && modules.length > 0 && cameraPreviews.length === 0) {
             void loadCameraPreviews();
         }
     }, [system, modules, cameraPreviews.length]);
 
     useEffect(() => {
-        // Set up camera preview refresh every 3 seconds
-        const interval = setInterval(() => {
-            setRefreshKey(prev => prev + 1);
-        }, 3000);
-
-        return () => clearInterval(interval);
-    }, []);
-
-    useEffect(() => {
-        // Set selected camera from previews or query params
         if (cameraPreviews.length > 0) {
             const cameraParam = searchParams.get('camera');
             if (cameraParam) {
@@ -63,6 +60,57 @@ export default function SystemDetail() {
             }
         }
     }, [cameraPreviews, searchParams]);
+
+    useEffect(() => {
+        if (cameraPreviews.length > 0 && getRecordingModule()) {
+            void fetchChannelMappings();
+        }
+    }, [cameraPreviews, modules]);
+
+    const fetchChannelMappings = async () => {
+        if (!system) return;
+
+        try {
+            const module = getModule(system.id, 'Recording_1');
+            const binding = module.binding('channels');
+            binding.bind();
+
+            const channelsData = await firstValueFrom(
+                race(
+                    binding.listen().pipe(
+                        filter((v) => Array.isArray(v))
+                    ),
+                    timer(3000).pipe(map(() => []))
+                )
+            );
+
+            const channels = channelsData as { id: string; name: string }[];
+
+            // Filter channels with "View" in the name
+            const viewChannels = channels.filter(ch =>
+                ch.name.toLowerCase().includes('view')
+            );
+
+            console.log('[fetchChannelMappings] View channels:', viewChannels);
+
+            // Map camera previews to channels sequentially
+            const mappings: CameraChannelMapping[] = cameraPreviews.map((preview, idx) => {
+                const channel = viewChannels[idx] || null;
+
+                return {
+                    cameraModule: preview.module,
+                    ndiInput: idx + 1,
+                    channelId: channel?.id || null,
+                    channelName: channel?.name || null
+                };
+            });
+
+            console.log('[fetchChannelMappings] Mappings:', mappings);
+            setChannelMappings(mappings);
+        } catch (err) {
+            console.error('Failed to fetch channel mappings:', err);
+        }
+    };
 
     const loadCameraPreviews = async () => {
         if (!system) return;
@@ -96,7 +144,28 @@ export default function SystemDetail() {
 
     const getRecordingModule = () => {
         const recordingModules = modules.filter(m => m.name === 'Recording');
-        return recordingModules[0]; // Recording_1
+        return recordingModules[0];
+    };
+
+    const getRecordingModuleAddress = () => {
+        const recordingModule = getRecordingModule();
+        if (!recordingModule) return null;
+
+        if (recordingModule.ip) {
+            return recordingModule.ip;
+        } else if (recordingModule.uri) {
+            try {
+                return new URL(recordingModule.uri).hostname;
+            } catch {
+                return null;
+            }
+        }
+        return null;
+    };
+
+    const getChannelForCamera = (cameraModule: string): string | null => {
+        const mapping = channelMappings.find(m => m.cameraModule === cameraModule);
+        return mapping?.channelId || null;
     };
 
     const handleCameraSelect = (cameraReference: string) => {
@@ -134,6 +203,7 @@ export default function SystemDetail() {
 
     const selectedCameraPreview = cameraPreviews.find(p => p.module === selectedCamera);
     const recordingModule = getRecordingModule();
+    const recordingAddress = getRecordingModuleAddress();
 
     return (
         <div className="h-full flex flex-col">
@@ -155,27 +225,20 @@ export default function SystemDetail() {
 
             <div className="flex-1 overflow-y-auto p-6">
                 <div className="space-y-6">
-                    {cameraPreviews.length > 0 && recordingModule && (
+                    {cameraPreviews.length > 0 && recordingModule && recordingAddress && (
                         <>
                             <div className="grid lg:grid-cols-[1fr,auto] gap-6">
-                                {/* Camera Feed Preview */}
-                                {selectedCameraPreview && (
-                                    <div className="card bg-base-200">
-                                        <div className="card-body">
-                                            <h2 className="card-title text-lg mb-4">Camera Feed</h2>
-                                            <div className="aspect-video bg-base-300 rounded-lg overflow-hidden">
-                                                <img
-                                                    src={`${selectedCameraPreview.url}&t=${refreshKey}`}
-                                                    alt={selectedCameraPreview.label}
-                                                    className="w-full h-full object-contain"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
+                                {/* Stream Player */}
+                                {selectedCamera && (
+                                    <StreamPlayer
+                                        systemId={system.id}
+                                        recordingModuleIp={recordingAddress}
+                                        channelId={getChannelForCamera(selectedCamera)}
+                                    />
                                 )}
 
                                 {/* PTZ Controls */}
-                                {selectedCameraPreview && (
+                                {selectedCamera && (
                                     <div className="card bg-base-200 w-full lg:w-[480px]">
                                         <div className="card-body">
                                             <PTZControls
@@ -191,11 +254,7 @@ export default function SystemDetail() {
                             {/* Camera Selector */}
                             {cameraPreviews.length > 1 && (
                                 <CameraSelector
-                                    cameraModules={cameraPreviews.map(preview => ({
-                                        id: preview.module,
-                                        name: preview.label,
-                                        custom_name: preview.label,
-                                    } as PlaceModule))}
+                                    cameraPreviews={cameraPreviews}
                                     selectedCamera={selectedCamera}
                                     onCameraSelect={handleCameraSelect}
                                 />
