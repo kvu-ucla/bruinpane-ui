@@ -18,7 +18,7 @@ function App() {
   }
   
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/bruinpane">
       <Routes>
         <Route path="/" element={<Layout />}>
           {isAuthenticated && (
