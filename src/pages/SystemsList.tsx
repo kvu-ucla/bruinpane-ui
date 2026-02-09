@@ -18,8 +18,11 @@ export default function SystemsList() {
     try {
       setLoading(true);
       setError(null);
+      console.log('Starting to load systems...');
       const data = await getSystems();
-      console.log('Systems data:', data);
+      console.log('Systems data received:', data);
+      console.log('Is array?', Array.isArray(data));
+      console.log('Length:', data?.length);
       setSystems(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error loading systems:', err);

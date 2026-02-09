@@ -1,17 +1,18 @@
-import {querySystems, showModule, showSystem} from '@placeos/ts-client';
-import {SystemFeature} from '../models';
+import { querySystems, showModule, showSystem } from '@placeos/ts-client';
+import { firstValueFrom } from 'rxjs';
+import { SystemFeature } from '../models';
 
 const hasRecordingFeature = (system: any): boolean => {
   if (!system.features || !Array.isArray(system.features)) return false;
 
   return system.features.some((feature: string) =>
-    feature.toLowerCase() === SystemFeature.Recording
+      feature.toLowerCase() === SystemFeature.Recording
   );
 };
 
 export const getSystems = async () => {
   try {
-    const response = querySystems({ limit: 500 });
+    const response = await firstValueFrom(querySystems({ limit: 500 }));
     console.log("Query systems response: ", response);
 
     if (!Array.isArray(response) || response.length === 0) {
@@ -53,4 +54,3 @@ export const getSystemModules = async (moduleIds: string[]) => {
     return [];
   }
 };
-
