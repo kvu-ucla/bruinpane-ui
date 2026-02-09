@@ -21,7 +21,11 @@ export default function SystemCard({ system }: SystemCardProps) {
                     )}
                     <Link
                         to={`/systems/${system.id}`}
-                        state={{ system, modules: system.loadedModules }}
+                        state={{
+                            system,
+                            modules: system.loadedModules,
+                            cameraPreviews: system.camera_previews  // Pass camera previews too!
+                        }}
                         className="flex-1 min-w-0 hover:opacity-70 transition-opacity"
                     >
                         <h3 className="card-title text-base">{system.name}</h3>
