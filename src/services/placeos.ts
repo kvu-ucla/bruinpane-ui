@@ -3,7 +3,13 @@ import { firstValueFrom } from 'rxjs';
 import { SystemFeature } from '../models';
 
 const hasRecordingFeature = (system: any): boolean => {
-  if (!system.features || !Array.isArray(system.features)) return false;
+  if (!system.features || !Array.isArray(system.features)) {
+    console.log("No features array for system:", system.name);
+    return false;
+  }
+
+  console.log(`Checking system "${system.name}":`, system.features);
+  console.log(`Looking for feature:`, SystemFeature.Recording);
 
   return system.features.some((feature: string) =>
       feature.toLowerCase() === SystemFeature.Recording
