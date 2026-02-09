@@ -227,25 +227,29 @@ export default function SystemDetail() {
                 <div className="space-y-6">
                     {cameraPreviews.length > 0 && recordingModule && recordingAddress && (
                         <>
-                            <div className="grid lg:grid-cols-[1fr,auto] gap-6">
-                                {/* Stream Player */}
+                            <div className="flex flex-col lg:flex-row gap-6">
+                                {/* Stream Player - takes remaining space */}
                                 {selectedCamera && (
-                                    <StreamPlayer
-                                        systemId={system.id}
-                                        recordingModuleIp={recordingAddress}
-                                        channelId={getChannelForCamera(selectedCamera)}
-                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <StreamPlayer
+                                            systemId={system.id}
+                                            recordingModuleIp={recordingAddress}
+                                            channelId={getChannelForCamera(selectedCamera)}
+                                        />
+                                    </div>
                                 )}
 
-                                {/* PTZ Controls */}
+                                {/* PTZ Controls - fixed width on large screens */}
                                 {selectedCamera && (
-                                    <div className="card bg-base-200 w-full lg:w-[480px]">
-                                        <div className="card-body">
-                                            <PTZControls
-                                                systemId={system.id}
-                                                cameraModule={recordingModule.id}
-                                                moduleInfo={recordingModule}
-                                            />
+                                    <div className="lg:w-[420px] flex-shrink-0">
+                                        <div className="card bg-base-200">
+                                            <div className="card-body">
+                                                <PTZControls
+                                                    systemId={system.id}
+                                                    cameraModule={recordingModule.id}
+                                                    moduleInfo={recordingModule}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 )}
