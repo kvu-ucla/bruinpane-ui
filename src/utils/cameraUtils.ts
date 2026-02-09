@@ -1,6 +1,6 @@
 import { getModule, PlaceModule } from '@placeos/ts-client';
-import { firstValueFrom } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { firstValueFrom, race, timer } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import { CameraPreview } from '../types';
 
 const DOMAIN = 'placeos-prod.avit.it.ucla.edu';
@@ -18,17 +18,20 @@ export const getActiveNDIInputs = async (systemId: string, moduleReferenceName: 
                 const binding = module.binding(statusKey);
                 binding.bind();
 
-                // Wait for first boolean value (skip undefined)
+                // Race between getting a value or timing out after 3 seconds
                 const value = await firstValueFrom(
-                    binding.listen().pipe(
-                        filter((v) => typeof v === 'boolean')
+                    race(
+                        binding.listen().pipe(
+                            filter((v) => typeof v === 'boolean')
+                        ),
+                        timer(3000).pipe(map(() => false)) // Default to false after 3s
                     )
                 );
 
                 console.log(`[getActiveNDIInputs] ${statusKey} = ${value}`);
                 return { input: i, active: value === true };
             } catch (err) {
-                console.log(`[getActiveNDIInputs] ⚠️ ${statusKey} does not exist or failed to fetch`);
+                console.log(`[getActiveNDIInputs] ⚠️ ${statusKey} error:`, err);
                 return { input: i, active: false };
             }
         });
