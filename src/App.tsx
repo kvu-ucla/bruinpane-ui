@@ -1,7 +1,7 @@
 import {Routes, Route, Navigate, HashRouter} from 'react-router-dom';
 import Layout from './components/Layout';
 import SystemsList from './pages/SystemsList';
-// import SystemDetail from './pages/SystemDetail';
+import SystemDetail from './pages/SystemDetail';
 import PlaceholderPage from './pages/PlaceholderPage';
 import {useAuth} from "./AuthContext.tsx";
 
@@ -25,7 +25,7 @@ function App() {
                     <>
                         <Route index element={<Navigate to="/systems" replace />} />
                         <Route path="systems" element={<SystemsList />} />
-                        {/*<Route path="systems/:id" element={<SystemDetail />} />*/}
+                        <Route path="systems/:id" element={<SystemDetail />} />
                         <Route path="modules" element={<PlaceholderPage title="Modules" />} />
                         <Route path="zones" element={<PlaceholderPage title="Zones" />} />
                         <Route path="drivers" element={<PlaceholderPage title="Drivers" />} />

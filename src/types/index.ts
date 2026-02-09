@@ -1,3 +1,5 @@
+import { PlaceModule } from '@placeos/ts-client';
+
 export interface CameraPreview {
     module: string;
     url: string;
@@ -10,4 +12,8 @@ export interface SystemWithPreviews {
     modules?: readonly string[];
     camera_previews?: CameraPreview[];
     [key: string]: any;
+}
+
+export interface SystemWithModules extends SystemWithPreviews {
+    loadedModules?: PlaceModule[];
 }
