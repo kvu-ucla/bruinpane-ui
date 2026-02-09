@@ -19,7 +19,9 @@ export const getSystems = async () => {
       return [];
     }
 
-    return response.filter(system => hasRecordingFeature(system));
+    const filtered = response.filter(system => hasRecordingFeature(system));
+    console.log("Filtered systems response: ", filtered);
+    return 
   } catch (error) {
     console.error('Failed to fetch systems:', error);
     throw error;
