@@ -1,24 +1,23 @@
-import { querySystems, showSystem, showModule, execute } from '@placeos/ts-client';
-import { SystemFeature } from '../models';
+import {querySystems, showModule, showSystem} from '@placeos/ts-client';
+import {SystemFeature} from '../models';
 
 const hasRecordingFeature = (system: any): boolean => {
   if (!system.features || !Array.isArray(system.features)) return false;
 
   return system.features.some((feature: string) =>
-    typeof feature === 'string' && feature.toLowerCase() === SystemFeature.Recording
+    feature.toLowerCase() === SystemFeature.Recording
   );
 };
 
 export const getSystems = async () => {
   try {
-    const response = await querySystems({});
+    const response = querySystems({ limit: 500 });
 
     if (!Array.isArray(response) || response.length === 0) {
       return [];
     }
 
-    const recordingSystems = response.filter(system => hasRecordingFeature(system));
-    return recordingSystems;
+    return response.filter(system => hasRecordingFeature(system));
   } catch (error) {
     console.error('Failed to fetch systems:', error);
     throw error;
@@ -27,8 +26,7 @@ export const getSystems = async () => {
 
 export const getSystemById = async (id: string) => {
   try {
-    const system = await showSystem(id);
-    return system;
+    return await showSystem(id);
   } catch (error) {
     console.error('Failed to fetch system:', error);
     throw error;
@@ -37,8 +35,7 @@ export const getSystemById = async (id: string) => {
 
 export const getModuleById = async (id: string) => {
   try {
-    const module = await showModule(id);
-    return module;
+    return await showModule(id);
   } catch (error) {
     console.error(`Failed to fetch module ${id}:`, error);
     return null;
@@ -56,22 +53,3 @@ export const getSystemModules = async (moduleIds: string[]) => {
   }
 };
 
-export const executeCameraCommand = async (
-  systemId: string,
-  moduleName: string,
-  method: string,
-  args: any[] = []
-) => {
-  try {
-    const result = await execute({
-      sys_id: systemId,
-      module: moduleName,
-      method,
-      args,
-    });
-    return result;
-  } catch (error) {
-    console.error(`Camera command failed: ${method}`, error);
-    throw error;
-  }
-};
