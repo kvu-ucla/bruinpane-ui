@@ -21,11 +21,13 @@ export const getSystems = async () => {
     const response = await firstValueFrom(querySystems({ limit: 500 }));
     console.log("Query systems response: ", response);
 
-    if (!Array.isArray(response) || response.length === 0) {
+    const systemsArray = response?.data || [];
+
+    if (!Array.isArray(systemsArray) || systemsArray.length === 0) {
       return [];
     }
-
-    const filtered = response.filter(system => hasRecordingFeature(system));
+    
+    const filtered = systemsArray.filter(system => hasRecordingFeature(system));
     console.log("Filtered systems response: ", filtered);
     return 
   } catch (error) {
