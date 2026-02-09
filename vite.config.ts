@@ -60,7 +60,7 @@ export default defineConfig({
       ],
     }),
   ],
-  base: '/bruinpane/',
+  base: './',
   server: {
     proxy: PROXY_MAP,
   },
