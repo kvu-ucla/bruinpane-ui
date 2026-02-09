@@ -12,6 +12,7 @@ const hasRecordingFeature = (system: any): boolean => {
 export const getSystems = async () => {
   try {
     const response = querySystems({ limit: 500 });
+    console.log("Query systems response: ", response);
 
     if (!Array.isArray(response) || response.length === 0) {
       return [];
