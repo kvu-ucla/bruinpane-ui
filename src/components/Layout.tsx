@@ -2,16 +2,16 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import {
   Monitor,
-  Box,
-  MapPin,
-  Wrench,
-  FolderGit2,
-  Zap,
-  Bell,
-  BarChart3,
-  Users,
-  Server,
-  Settings,
+  // Box,
+  // MapPin,
+  // Wrench,
+  // FolderGit2,
+  // Zap,
+  // Bell,
+  // BarChart3,
+  // Users,
+  // Server,
+  // Settings,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';

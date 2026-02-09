@@ -11,7 +11,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Navigate to="/systems" replace />} />
           <Route path="systems" element={<SystemsList />} />
-          <Route path="systems/:id" element={<SystemDetail />} />
+          {/*<Route path="systems/:id" element={<SystemDetail />} />*/}
           <Route path="modules" element={<PlaceholderPage title="Modules" />} />
           <Route path="zones" element={<PlaceholderPage title="Zones" />} />
           <Route path="drivers" element={<PlaceholderPage title="Drivers" />} />
