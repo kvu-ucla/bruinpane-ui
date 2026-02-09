@@ -13,7 +13,7 @@ export const getActiveNDIInputs = async (systemId: string, moduleReferenceName: 
         for (let i = 1; i <= 6; i++) {
             const statusKey = `NDI${i}_video_status`;
             try {
-                const value = await firstValueFrom(module.binding(statusKey).listen());
+                const value = await firstValueFrom(module.variable(statusKey).listen());
                 console.log(`[getActiveNDIInputs] ${statusKey} = ${value}`);
 
                 if (value === true) {
