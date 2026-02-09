@@ -11,8 +11,8 @@ export const getActiveNDIInputs = async (systemId: string, moduleId: string): Pr
         const activeInputs: number[] = [];
 
         for (let i = 1; i <= 20; i++) {
+            const statusKey = `NDI${i}_video_status`;
             try {
-                const statusKey = `NDI${i}_video_status`;
                 const value = await firstValueFrom(module.binding(statusKey).listen());
                 console.log(`[getActiveNDIInputs] ${statusKey} = ${value}`);
 
@@ -21,7 +21,6 @@ export const getActiveNDIInputs = async (systemId: string, moduleId: string): Pr
                     console.log(`[getActiveNDIInputs] ✅ Added NDI${i} to active inputs`);
                 }
             } catch (err) {
-                const statusKey = `NDI${i}_video_status`;
                 console.log(`[getActiveNDIInputs] ❌ Failed to get ${statusKey}:`, err);
                 if (i > 1 && activeInputs.length === 0) {
                     console.log(`[getActiveNDIInputs] Stopping early - no inputs found after ${i} attempts`);
@@ -44,12 +43,37 @@ export const generateCameraPreviews = async (
 ): Promise<CameraPreview[]> => {
     console.log(`[generateCameraPreviews] Starting for system: ${systemId}`);
     console.log(`[generateCameraPreviews] Total modules:`, modules.length);
-    console.log(`[generateCameraPreviews] Module IDs:`, modules.map(m => m.id));
+
+    // Print detailed information about all modules
+    console.log(`[generateCameraPreviews] ========== ALL MODULES DETAILS ==========`);
+    modules.forEach((module, index) => {
+        console.log(`[generateCameraPreviews] Module ${index + 1}:`, {
+            id: module.id,
+            name: module.name,
+            custom_name: module.custom_name,
+            ip: module.ip,
+            port: module.port,
+            driver_id: module.driver_id,
+            edge_id: module.edge_id,
+            role: module.role,
+            connected: module.connected,
+            running: module.running,
+            tls: module.tls,
+            udp: module.udp,
+            uri: module.uri,
+            notes: module.notes,
+            control_system_id: module.control_system_id,
+            created_at: module.created_at,
+            updated_at: module.updated_at
+        });
+    });
+    console.log(`[generateCameraPreviews] ========================================`);
 
     const recordingModule = modules.find(module => module.id === 'Recording_1');
 
     if (!recordingModule) {
         console.log(`[generateCameraPreviews] ❌ No Recording_1 module found`);
+        console.log(`[generateCameraPreviews] Available module IDs:`, modules.map(m => m.id));
         return [];
     }
 
