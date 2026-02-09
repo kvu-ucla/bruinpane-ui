@@ -29,7 +29,7 @@ export const getSystems = async () => {
     
     const filtered = systemsArray.filter(system => hasRecordingFeature(system));
     console.log("Filtered systems response: ", filtered);
-    return 
+    return filtered;
   } catch (error) {
     console.error('Failed to fetch systems:', error);
     throw error;
