@@ -13,7 +13,14 @@ export const getActiveNDIInputs = async (systemId: string, moduleReferenceName: 
         for (let i = 1; i <= 6; i++) {
             const statusKey = `NDI${i}_video_status`;
             try {
-                const value = await firstValueFrom(module.variable(statusKey).listen());
+                const binding = module.binding(statusKey);
+
+                // Bind to establish the connection
+                binding.bind();
+
+                // Listen and get first value (automatically unsubscribes)
+                const value = await firstValueFrom(binding.listen());
+
                 console.log(`[getActiveNDIInputs] ${statusKey} = ${value}`);
 
                 if (value === true) {
@@ -22,7 +29,6 @@ export const getActiveNDIInputs = async (systemId: string, moduleReferenceName: 
                 }
             } catch (err) {
                 console.log(`[getActiveNDIInputs] ⚠️ ${statusKey} does not exist or failed to fetch`);
-                // Continue checking other inputs even if this one doesn't exist
             }
         }
 
