@@ -53,3 +53,8 @@ export const getSystemModules = async (moduleIds: string[]): Promise<PlaceModule
     return [];
   }
 };
+
+export const executeCameraCommand = (module: string, camera: string, method: string, args: any[]) => {
+  console.log(`Executing camera ${camera} with ${method}`);
+  console.log(`Executing module ${module} with ${args}`);
+}
