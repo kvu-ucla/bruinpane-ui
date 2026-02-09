@@ -2,17 +2,13 @@ import { querySystems, showModule, showSystem, PlaceSystem, PlaceModule } from '
 import { firstValueFrom } from 'rxjs';
 import { SystemFeature } from '../models';
 
-const hasRecordingFeature = (system: PlaceSystem): boolean => {
-  if (!system.features || !Array.isArray(system.features)) return false;
-
-  return system.features.some((feature: string) =>
-      feature.toLowerCase() === SystemFeature.Recording
-  );
-};
 
 export const getSystems = async (): Promise<PlaceSystem[]> => {
   try {
-    const response = await firstValueFrom(querySystems({ limit: 500 }));
+    const response = await firstValueFrom(querySystems({ 
+      limit: 500, 
+      features: `${SystemFeature.Recording}`}));
+    
     console.log("Query systems response: ", response);
 
     const systemsArray = response?.data || [];
@@ -20,10 +16,9 @@ export const getSystems = async (): Promise<PlaceSystem[]> => {
     if (!Array.isArray(systemsArray) || systemsArray.length === 0) {
       return [];
     }
-
-    const filtered = systemsArray.filter(system => hasRecordingFeature(system));
-    console.log("Filtered systems response: ", filtered);
-    return filtered;
+    
+    console.log("Filtered systems response: ", systemsArray);
+    return systemsArray;
   } catch (error) {
     console.error('Failed to fetch systems:', error);
     throw error;

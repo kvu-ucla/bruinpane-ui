@@ -41,7 +41,11 @@ export default function Layout() {
         <div className={`border-b border-base-300 flex items-center ${isCollapsed ? 'justify-center p-4' : 'justify-between p-4'}`}>
           {!isCollapsed && (
             <h1 className="text-2xl font-bold">
-              Place<span className="text-primary">OS</span>
+              <img
+                  src={import.meta.env.BASE_URL + "logo_dts.svg"}
+                  alt="UCLA Digital Technology Solutions logo"
+                  className="h-16"
+              />
             </h1>
           )}
           <button
