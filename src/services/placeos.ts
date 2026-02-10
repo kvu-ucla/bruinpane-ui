@@ -7,7 +7,7 @@ export const getSystems = async (): Promise<PlaceSystem[]> => {
   try {
     const response = await firstValueFrom(querySystems({ 
       limit: 500, 
-      features: `${SystemFeature.Recording}`}));
+      features: `${SystemFeature.BruinCast}`}));
     
     console.log("Query systems response: ", response);
 

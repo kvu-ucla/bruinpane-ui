@@ -24,7 +24,7 @@ export default function SystemCard({ system }: SystemCardProps) {
                         state={{
                             system,
                             modules: system.loadedModules,
-                            cameraPreviews: system.camera_previews  // Pass camera previews too!
+                            cameraPreviews: system.camera_previews 
                         }}
                         className="flex-1 min-w-0 hover:opacity-70 transition-opacity"
                     >

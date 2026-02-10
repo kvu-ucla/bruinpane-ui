@@ -101,7 +101,6 @@ export default function Layout() {
 
       <main className="flex-1 overflow-auto flex flex-col">
         <div className="border-b border-base-300 px-6 py-3 flex items-center justify-end">
-          {/*<ConnectionStatus />*/}
         </div>
         <div className="flex-1 overflow-auto">
           <Outlet />

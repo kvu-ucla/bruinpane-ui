@@ -9,6 +9,7 @@ export enum SystemFeature {
   Signage = 'signage',
   AccessControl = 'access_control',
   Occupancy = 'occupancy',
+  BruinCast = 'bruincast'
 }
 
 export interface ModuleData {
