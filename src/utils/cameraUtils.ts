@@ -5,52 +5,39 @@ import { CameraPreview } from '../types';
 
 const DOMAIN = 'placeos-prod.avit.it.ucla.edu';
 
-export const getActiveNDIInputs = async (systemId: string, moduleReferenceName: string): Promise<number[]> => {
+export const getViewerChannels = async (systemId: string): Promise<{ id: string; name: string }[]> => {
     try {
-        console.log(`[getActiveNDIInputs] Starting for system: ${systemId}, module: ${moduleReferenceName}`);
-        const module = getModule(systemId, moduleReferenceName);
-        const activeInputs: number[] = [];
+        console.log(`[getViewerChannels] Starting for system: ${systemId}`);
+        const module = getModule(systemId, 'Recording_1');
+        const binding = module.binding('channels');
+        binding.bind();
 
-        // Check all channels
-        const checks = Array.from({ length: 6 }, (_, i) => i + 1).map(async (i) => {
-            const statusKey = `channels`;
-            try {
-                const binding = module.variable(statusKey);
-                binding.bind();
+        // Wait for channels data
+        const value = await firstValueFrom(
+            race(
+                binding.listen().pipe(
+                    filter((v) => Array.isArray(v))
+                ),
+                timer(3000).pipe(map(() => []))
+            )
+        );
 
-                // Race between getting a value or timing out after 3 seconds
-                const value = await firstValueFrom(
-                    race(
-                        binding.listen().pipe(
-                            filter((v) => typeof v === 'boolean')
-                        ),
-                        timer(3000).pipe(map(() => false)) // Default to false after 3s
-                    )
-                );
+        console.log(`[getViewerChannels] Channels data:`, value);
 
-                console.log(`[getActiveNDIInputs] ${statusKey} = ${value}`);
-                return { input: i, active: value === true };
-            } catch (err) {
-                console.log(`[getActiveNDIInputs] ⚠️ ${statusKey} error:`, err);
-                return { input: i, active: false };
-            }
-        });
+        if (!Array.isArray(value)) {
+            console.log(`[getViewerChannels] ⚠️ Channels is not an array`);
+            return [];
+        }
 
-        // Wait for all checks to complete
-        const results = await Promise.all(checks);
+        // Filter channels where name includes "View"
+        const viewerChannels = (value as { id: string; name: string }[]).filter(channel =>
+            channel.name.toLowerCase().includes('view')
+        );
 
-        // Collect active inputs
-        results.forEach(({ input, active }) => {
-            if (active) {
-                activeInputs.push(input);
-                console.log(`[getActiveNDIInputs] ✅ Added NDI${input} to active inputs`);
-            }
-        });
-
-        console.log(`[getActiveNDIInputs] Final active inputs:`, activeInputs.sort((a, b) => a - b));
-        return activeInputs.sort((a, b) => a - b);
+        console.log(`[getViewerChannels] ✅ Found ${viewerChannels.length} viewer channels:`, viewerChannels);
+        return viewerChannels;
     } catch (err) {
-        console.error(`[getActiveNDIInputs] ERROR:`, err);
+        console.error(`[getViewerChannels] ERROR:`, err);
         return [];
     }
 };
@@ -103,24 +90,26 @@ export const generateCameraPreviews = async (
             return [];
         }
 
-        // Get active NDI inputs
-        console.log(`[generateCameraPreviews] Fetching active NDI inputs...`);
-        const activeInputs = await getActiveNDIInputs(systemId, recording1.referenceName);
-        console.log(`[generateCameraPreviews] Active NDI inputs:`, activeInputs);
+        // Get viewer channels
+        console.log(`[generateCameraPreviews] Fetching viewer channels...`);
+        const viewerChannels = await getViewerChannels(systemId);
+        console.log(`[generateCameraPreviews] Viewer channels:`, viewerChannels);
 
-        if (activeInputs.length === 0) {
-            console.log(`[generateCameraPreviews] ⚠️ No active NDI inputs found`);
+        if (viewerChannels.length === 0) {
+            console.log(`[generateCameraPreviews] ⚠️ No viewer channels found`);
             return [];
         }
 
-        // Generate preview URLs
-        const previews = activeInputs.map(input => {
+        // Generate previews using channel IDs for both preview and streaming
+        const previews = viewerChannels.map(channel => {
             const preview = {
                 module: recording1.referenceName,
-                url: `https://${DOMAIN}/epiphan/https/${address}/api/v2.0/channels/${input}/preview?resolution=300x300&keep_aspect_ratio=true&format=jpg`,
-                label: `Recording - NDI${input}`
+                url: `https://${DOMAIN}/epiphan/https/${address}/api/v2.0/channels/${channel.id}/preview?resolution=300x300&keep_aspect_ratio=true&format=jpg`,
+                label: channel.name, // "Professor View", "Learner View"
+                channelId: channel.id // "2", "4" (used for both preview and streaming)
             };
-            console.log(`[generateCameraPreviews] Generated preview for NDI${input}:`, preview.url);
+
+            console.log(`[generateCameraPreviews] Generated preview for ${channel.name} (channel ${channel.id}):`, preview.url);
             return preview;
         });
 
