@@ -11,11 +11,11 @@ export const getActiveNDIInputs = async (systemId: string, moduleReferenceName: 
         const module = getModule(systemId, moduleReferenceName);
         const activeInputs: number[] = [];
 
-        // Check all 6 inputs in parallel
+        // Check all channels
         const checks = Array.from({ length: 6 }, (_, i) => i + 1).map(async (i) => {
-            const statusKey = `NDI${i}_video_status`;
+            const statusKey = `channels`;
             try {
-                const binding = module.binding(statusKey);
+                const binding = module.variable(statusKey);
                 binding.bind();
 
                 // Race between getting a value or timing out after 3 seconds
@@ -117,7 +117,7 @@ export const generateCameraPreviews = async (
         const previews = activeInputs.map(input => {
             const preview = {
                 module: recording1.referenceName,
-                url: `https://${DOMAIN}/epiphan/https/${address}/api/v2.0/inputs/NDI${input}/preview?resolution=300x300&keep_aspect_ratio=true&format=jpg`,
+                url: `https://${DOMAIN}/epiphan/https/${address}/api/v2.0/channels/${input}/preview?resolution=300x300&keep_aspect_ratio=true&format=jpg`,
                 label: `Recording - NDI${input}`
             };
             console.log(`[generateCameraPreviews] Generated preview for NDI${input}:`, preview.url);

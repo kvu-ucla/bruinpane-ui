@@ -14,6 +14,8 @@
     "@placeos/ts-client": "^4.7.7",
     "@supabase/supabase-js": "^2.57.4",
     "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/react-query": "^5.90.20",
+    "@tanstack/react-query-devtools": "^5.91.3",
     "daisyui": "^5.5.18",
     "lucide-react": "^0.344.0",
     "mpegts.js": "^1.8.0",
