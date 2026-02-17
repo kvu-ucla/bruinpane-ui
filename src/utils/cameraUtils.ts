@@ -3,7 +3,7 @@ import { firstValueFrom, race, timer } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { CameraPreview, ChannelCameraMap } from '../types';
 
-const DOMAIN = import.meta.env.VITE_PLACEOS_DOMAIN;
+const DOMAIN = "placeos-prod.avit.it.ucla.edu";
 
 // ─────────────────────────────────────────────
 // Generic Binding Helper
