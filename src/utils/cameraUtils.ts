@@ -1,37 +1,82 @@
 import { getModule, PlaceModule } from '@placeos/ts-client';
 import { firstValueFrom, race, timer } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { CameraPreview } from '../types';
+import { CameraPreview, ChannelCameraMap } from '../types';
 
-const DOMAIN = 'placeos-prod.avit.it.ucla.edu';
+const DOMAIN = import.meta.env.VITE_PLACEOS_DOMAIN;
+
+// ─────────────────────────────────────────────
+// Generic Binding Helper
+// ─────────────────────────────────────────────
+
+const bindAndGet = async <T>(
+    systemId: string,
+    moduleName: string,
+    statusKey: string,
+    validator: (v: unknown) => boolean,
+    fallback: T,
+    timeoutMs: number = 3000
+): Promise<T> => {
+    try {
+        console.log(`[bindAndGet] ${moduleName} → ${statusKey}`);
+        const module = getModule(systemId, moduleName);
+        const binding = module.binding(statusKey);
+        binding.bind();
+
+        const value = await firstValueFrom(
+            race(
+                binding.listen().pipe(filter(validator)),
+                timer(timeoutMs).pipe(map(() => fallback))
+            )
+        );
+
+        console.log(`[bindAndGet] ${statusKey} =`, value);
+        return value as T;
+    } catch (err) {
+        console.error(`[bindAndGet] ERROR ${moduleName} → ${statusKey}:`, err);
+        return fallback;
+    }
+};
+
+// ─────────────────────────────────────────────
+// Type Guards
+// ─────────────────────────────────────────────
+
+const isChannelArray = (v: unknown): v is { id: string; name: string }[] =>
+    Array.isArray(v) && v.every(item =>
+        typeof item === 'object' &&
+        item !== null &&
+        'id' in item &&
+        'name' in item
+    );
+
+const isChannelCameraMap = (v: unknown): v is ChannelCameraMap =>
+    typeof v === 'object' &&
+    v !== null &&
+    !Array.isArray(v) &&
+    Object.entries(v).every(
+        ([k, val]) => typeof k === 'string' && typeof val === 'string'
+    );
+
+// ─────────────────────────────────────────────
+// Viewer Channels
+// ─────────────────────────────────────────────
 
 export const getViewerChannels = async (systemId: string): Promise<{ id: string; name: string }[]> => {
     try {
         console.log(`[getViewerChannels] Starting for system: ${systemId}`);
-        const module = getModule(systemId, 'Recording_1');
-        const binding = module.binding('channels');
-        binding.bind();
 
-        // Wait for channels data
-        const value = await firstValueFrom(
-            race(
-                binding.listen().pipe(
-                    filter((v) => Array.isArray(v))
-                ),
-                timer(3000).pipe(map(() => []))
-            )
+        const channels = await bindAndGet<{ id: string; name: string }[]>(
+            systemId,
+            'Recording_1',
+            'channels',
+            isChannelArray,
+            [],
+            3000
         );
 
-        console.log(`[getViewerChannels] Channels data:`, value);
-
-        if (!Array.isArray(value)) {
-            console.log(`[getViewerChannels] ⚠️ Channels is not an array`);
-            return [];
-        }
-
-        // Filter channels where name includes "View"
-        const viewerChannels = (value as { id: string; name: string }[]).filter(channel =>
-            channel.name.toLowerCase().includes('view')
+        const viewerChannels = channels.filter(ch =>
+            ch.name.toLowerCase().includes('view')
         );
 
         console.log(`[getViewerChannels] ✅ Found ${viewerChannels.length} viewer channels:`, viewerChannels);
@@ -41,6 +86,71 @@ export const getViewerChannels = async (systemId: string): Promise<{ id: string;
         return [];
     }
 };
+
+// ─────────────────────────────────────────────
+// Channel → Camera Mapping
+// ─────────────────────────────────────────────
+
+export const getChannelCameraMap = async (systemId: string): Promise<ChannelCameraMap> => {
+    try {
+        console.log(`[getChannelCameraMap] Starting for system: ${systemId}`);
+
+        const moduleMap = await bindAndGet<ChannelCameraMap>(
+            systemId,
+            'Recording_1',
+            'camera_map',
+            isChannelCameraMap,
+            {},
+            3000
+        );
+
+        console.log(`[getChannelCameraMap] ✅ camera_map binding result:`, moduleMap);
+        return moduleMap;
+    } catch (err) {
+        console.error(`[getChannelCameraMap] ERROR:`, err);
+        return {};
+    }
+};
+
+// ─────────────────────────────────────────────
+// Camera Module Resolution
+// ─────────────────────────────────────────────
+
+export const resolveCameraModule = (
+    channelId: string,
+    channelName: string,
+    channelCameraMap: ChannelCameraMap
+): { cameraModuleReference: string | null } => {
+    // Priority 1: Explicit mapping
+    if (channelCameraMap[channelId]) {
+        const reference = channelCameraMap[channelId]; // e.g., "Camera_1"
+        console.log(`[resolveCameraModule] ✅ Explicit map: ${channelName} → ${reference}`);
+        return { cameraModuleReference: reference };
+    }
+
+    // Priority 2: Convention-based name matching
+    const words = channelName
+        .toLowerCase()
+        .replace(/\s+view$/i, '')
+        .split(/\s+/)
+        .filter(w => w.length > 3);
+
+    const matchedReference = words
+        .map(word => `Camera_${word.charAt(0).toUpperCase() + word.slice(1)}`)
+        .find(ref => ref !== null) || null;
+
+    if (matchedReference) {
+        console.log(`[resolveCameraModule] ✅ Convention match: ${channelName} → ${matchedReference}`);
+        return { cameraModuleReference: matchedReference };
+    }
+
+    console.warn(`[resolveCameraModule] ⚠️ No camera found for channel: ${channelName}`);
+    return { cameraModuleReference: null };
+};
+
+// ─────────────────────────────────────────────
+// Generate Camera Previews
+// ─────────────────────────────────────────────
 
 export const generateCameraPreviews = async (
     systemId: string,
@@ -90,10 +200,15 @@ export const generateCameraPreviews = async (
             return [];
         }
 
-        // Get viewer channels
-        console.log(`[generateCameraPreviews] Fetching viewer channels...`);
-        const viewerChannels = await getViewerChannels(systemId);
+        // Fetch viewer channels and camera map in parallel
+        console.log(`[generateCameraPreviews] Fetching viewer channels and camera map...`);
+        const [viewerChannels, channelCameraMap] = await Promise.all([
+            getViewerChannels(systemId),
+            getChannelCameraMap(systemId)
+        ]);
+
         console.log(`[generateCameraPreviews] Viewer channels:`, viewerChannels);
+        console.log(`[generateCameraPreviews] Channel-Camera map:`, channelCameraMap);
 
         if (viewerChannels.length === 0) {
             console.log(`[generateCameraPreviews] ⚠️ No viewer channels found`);
@@ -101,15 +216,22 @@ export const generateCameraPreviews = async (
         }
 
         // Generate previews using channel IDs for both preview and streaming
-        const previews = viewerChannels.map(channel => {
-            const preview = {
+        const previews: CameraPreview[] = viewerChannels.map(channel => {
+            const { cameraModuleReference } = resolveCameraModule(
+                channel.id,
+                channel.name,
+                channelCameraMap
+            );
+
+            const preview: CameraPreview = {
                 module: recording1.referenceName,
                 url: `https://${DOMAIN}/epiphan/https/${address}/api/v2.0/channels/${channel.id}/preview?resolution=300x300&keep_aspect_ratio=true&format=jpg`,
-                label: channel.name, // "Professor View", "Learner View"
-                channelId: channel.id // "2", "4" (used for both preview and streaming)
+                label: channel.name,
+                channelId: channel.id,
+                cameraModuleReference
             };
 
-            console.log(`[generateCameraPreviews] Generated preview for ${channel.name} (channel ${channel.id}):`, preview.url);
+            console.log(`[generateCameraPreviews] Generated preview for ${channel.name} (channel ${channel.id}) → Camera: ${cameraModuleReference || 'None'}`);
             return preview;
         });
 

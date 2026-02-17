@@ -3,8 +3,8 @@ import { CameraPreview } from '../types';
 
 interface CameraSelectorProps {
     cameraPreviews: CameraPreview[];
-    selectedCamera: string | null;
-    onCameraSelect: (cameraReference: string) => void;
+    selectedCamera: string | null;    // channelId
+    onCameraSelect: (channelId: string) => void;
 }
 
 export default function CameraSelector({
@@ -28,12 +28,12 @@ export default function CameraSelector({
             <div className="card-body">
                 <h2 className="card-title">Available Cameras ({count})</h2>
                 <div className="mt-4 flex flex-wrap gap-2">
-                    {cameraPreviews.map((preview, idx) => (
+                    {cameraPreviews.map((preview) => (
                         <button
-                            key={idx}
-                            onClick={() => onCameraSelect(preview.module)}
+                            key={preview.channelId}
+                            onClick={() => onCameraSelect(preview.channelId)}
                             className={`w-48 h-48 rounded-lg overflow-hidden bg-base-300 relative group hover:ring-4 hover:ring-primary transition-all ${
-                                selectedCamera === preview.module ? 'ring-4 ring-primary' : ''
+                                selectedCamera === preview.channelId ? 'ring-4 ring-primary' : ''
                             }`}
                         >
                             <img
@@ -45,11 +45,13 @@ export default function CameraSelector({
                                 <div className="text-white text-sm font-medium truncate">
                                     {preview.label}
                                 </div>
-                                <div className="text-white/60 text-xs font-mono truncate mt-1">
-                                    {preview.module}
-                                </div>
+                                {preview.cameraModuleReference && (
+                                    <div className="text-white/60 text-xs font-mono truncate mt-1">
+                                        {preview.cameraModuleReference}
+                                    </div>
+                                )}
                             </div>
-                            {selectedCamera === preview.module && (
+                            {selectedCamera === preview.channelId && (
                                 <div className="absolute top-2 right-2 badge badge-primary badge-sm">
                                     Active
                                 </div>

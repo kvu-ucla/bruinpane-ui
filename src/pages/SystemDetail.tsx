@@ -1,64 +1,99 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { PlaceModule } from '@placeos/ts-client';
 import { useSystem, useCameraPreviews } from '../hooks/useSystems';
 import StreamPlayer from '../components/StreamPlayer';
 import PTZControls from '../components/PTZControls';
 import CameraSelector from '../components/CameraSelector';
+import { CameraPreview } from '../types';
 
 export default function SystemDetail() {
     const { id } = useParams<{ id: string }>();
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // Use React Query hooks
     const { data: system, isLoading, isError, error } = useSystem(id);
     const { data: cameraPreviews } = useCameraPreviews(id);
 
-    const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
+    const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
 
     const modules = system?.loadedModules || [];
     const previews = cameraPreviews || [];
 
+    // Set initial selected channel from URL or first preview
     useEffect(() => {
         if (previews.length > 0) {
-            const cameraParam = searchParams.get('camera');
-            if (cameraParam) {
-                setSelectedCamera(cameraParam);
+            const channelParam = searchParams.get('channel');
+            if (channelParam) {
+                setSelectedChannelId(channelParam);
             } else {
-                setSelectedCamera(previews[0].module);
+                setSelectedChannelId(previews[0].channelId);
             }
         }
     }, [previews, searchParams]);
 
-    const getRecordingModule = () => {
-        const recordingModules = modules.filter(m => m.name === 'Recording');
-        return recordingModules[0];
+    const getRecordingModule = (): PlaceModule | undefined => {
+        return modules.filter(m => m.name === 'Recording')[0];
     };
 
-    const getRecordingModuleAddress = () => {
+    const getRecordingModuleAddress = (): string | null => {
         const recordingModule = getRecordingModule();
         if (!recordingModule) return null;
 
-        if (recordingModule.ip) {
-            return recordingModule.ip;
-        } else if (recordingModule.uri) {
+        if (recordingModule.ip) return recordingModule.ip;
+
+        if (recordingModule.uri) {
             try {
                 return new URL(recordingModule.uri).hostname;
             } catch {
                 return null;
             }
         }
+
         return null;
     };
 
-    const getChannelForCamera = (cameraModule: string): string | null => {
-        const preview = previews.find(p => p.module === cameraModule);
-        return preview?.channelId || null;
+    const getSelectedPreview = (): CameraPreview | undefined => {
+        return previews.find(p => p.channelId === selectedChannelId);
     };
 
-    const handleCameraSelect = (cameraReference: string) => {
-        setSelectedCamera(cameraReference);
-        setSearchParams({ camera: cameraReference });
+    // Resolve camera module for PTZ using reference name e.g. "Camera_1"
+    const getActiveCameraModule = (): PlaceModule | undefined => {
+        const preview = getSelectedPreview();
+
+        if (!preview?.cameraModuleReference) {
+            console.log(`[SystemDetail] No camera module mapped for channel: ${selectedChannelId}`);
+            return undefined;
+        }
+
+        // Parse reference name into name and index
+        // "Camera_1" → name: "Camera", index: 1
+        const match = preview.cameraModuleReference.match(/^(.+?)_(\d+)$/);
+
+        if (!match) {
+            console.warn(`[SystemDetail] Invalid camera reference format: ${preview.cameraModuleReference}`);
+            return undefined;
+        }
+
+        const [, moduleName, moduleIndex] = match;
+
+        // Find module by name and index (1-indexed)
+        const cameraModules = modules.filter(m => m.name === moduleName);
+        const cameraModule = cameraModules[parseInt(moduleIndex) - 1];
+
+        if (!cameraModule) {
+            console.warn(`[SystemDetail] Camera module not found: ${preview.cameraModuleReference}`);
+            return undefined;
+        }
+
+        console.log(`[SystemDetail] ✅ Active camera module for channel ${selectedChannelId}: ${cameraModule.custom_name || cameraModule.name}`);
+        return cameraModule;
+    };
+
+    const handleCameraSelect = (channelId: string) => {
+        console.log(`[SystemDetail] Selected channel: ${channelId}`);
+        setSelectedChannelId(channelId);
+        setSearchParams({ channel: channelId });
     };
 
     if (isLoading) {
@@ -89,7 +124,8 @@ export default function SystemDetail() {
         );
     }
 
-    const selectedCameraPreview = previews.find(p => p.module === selectedCamera);
+    const selectedPreview = getSelectedPreview();
+    const activeCameraModule = getActiveCameraModule();
     const recordingModule = getRecordingModule();
     const recordingAddress = getRecordingModuleAddress();
 
@@ -102,9 +138,14 @@ export default function SystemDetail() {
                     </Link>
                     <div className="flex-1">
                         <h1 className="text-2xl font-bold">{system.display_name || system.name}</h1>
-                        {selectedCameraPreview && (
+                        {selectedPreview && (
                             <p className="text-sm text-base-content/60 mt-1">
-                                Viewing: {selectedCameraPreview.label}
+                                Viewing: {selectedPreview.label}
+                                {activeCameraModule && (
+                                    <span className="ml-2 badge badge-primary badge-sm">
+                                        {activeCameraModule.custom_name || activeCameraModule.name}
+                                    </span>
+                                )}
                             </p>
                         )}
                     </div>
@@ -116,24 +157,26 @@ export default function SystemDetail() {
                     {previews.length > 0 && recordingModule && recordingAddress && (
                         <>
                             <div className="flex flex-col lg:flex-row gap-6">
-                                {selectedCamera && (
+                                {/* Stream Player */}
+                                {selectedChannelId && (
                                     <div className="flex-1 min-w-0">
                                         <StreamPlayer
                                             systemId={system.id}
                                             recordingModuleIp={recordingAddress}
-                                            channelId={getChannelForCamera(selectedCamera)}
+                                            channelId={selectedChannelId}
                                         />
                                     </div>
                                 )}
 
-                                {selectedCamera && (
+                                {/* PTZ Controls - only shown if channel has a mapped camera module */}
+                                {activeCameraModule && (
                                     <div className="lg:w-[420px] flex-shrink-0">
                                         <div className="card bg-base-200">
                                             <div className="card-body">
                                                 <PTZControls
                                                     systemId={system.id}
-                                                    cameraModule={recordingModule.id}
-                                                    moduleInfo={recordingModule}
+                                                    cameraModule={activeCameraModule.id}
+                                                    moduleInfo={activeCameraModule}
                                                 />
                                             </div>
                                         </div>
@@ -141,16 +184,18 @@ export default function SystemDetail() {
                                 )}
                             </div>
 
+                            {/* Camera Selector */}
                             {previews.length > 1 && (
                                 <CameraSelector
                                     cameraPreviews={previews}
-                                    selectedCamera={selectedCamera}
+                                    selectedCamera={selectedChannelId}
                                     onCameraSelect={handleCameraSelect}
                                 />
                             )}
                         </>
                     )}
 
+                    {/* No cameras available */}
                     {previews.length === 0 && (
                         <div className="alert alert-info">
                             <span>No active camera feeds available for this system</span>
