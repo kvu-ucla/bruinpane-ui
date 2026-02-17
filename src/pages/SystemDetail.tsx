@@ -57,39 +57,6 @@ export default function SystemDetail() {
         return previews.find(p => p.channelId === selectedChannelId);
     };
 
-    // Resolve camera module for PTZ using reference name e.g. "Camera_1"
-    const getActiveCameraModule = (): PlaceModule | undefined => {
-        const preview = getSelectedPreview();
-
-        if (!preview?.cameraModuleReference) {
-            console.log(`[SystemDetail] No camera module mapped for channel: ${selectedChannelId}`);
-            return undefined;
-        }
-
-        // Parse reference name into name and index
-        // "Camera_1" → name: "Camera", index: 1
-        const match = preview.cameraModuleReference.match(/^(.+?)_(\d+)$/);
-
-        if (!match) {
-            console.warn(`[SystemDetail] Invalid camera reference format: ${preview.cameraModuleReference}`);
-            return undefined;
-        }
-
-        const [, moduleName, moduleIndex] = match;
-
-        // Find module by name and index (1-indexed)
-        const cameraModules = modules.filter(m => m.name === moduleName);
-        const cameraModule = cameraModules[parseInt(moduleIndex) - 1];
-
-        if (!cameraModule) {
-            console.warn(`[SystemDetail] Camera module not found: ${preview.cameraModuleReference}`);
-            return undefined;
-        }
-
-        console.log(`[SystemDetail] ✅ Active camera module for channel ${selectedChannelId}: ${cameraModule.custom_name || cameraModule.name}`);
-        return cameraModule;
-    };
-
     const handleCameraSelect = (channelId: string) => {
         console.log(`[SystemDetail] Selected channel: ${channelId}`);
         setSelectedChannelId(channelId);
@@ -125,7 +92,6 @@ export default function SystemDetail() {
     }
 
     const selectedPreview = getSelectedPreview();
-    const activeCameraModule = getActiveCameraModule();
     const recordingModule = getRecordingModule();
     const recordingAddress = getRecordingModuleAddress();
 
@@ -141,9 +107,9 @@ export default function SystemDetail() {
                         {selectedPreview && (
                             <p className="text-sm text-base-content/60 mt-1">
                                 Viewing: {selectedPreview.label}
-                                {activeCameraModule && (
+                                {selectedPreview.cameraModuleReference && (
                                     <span className="ml-2 badge badge-primary badge-sm">
-                                        {activeCameraModule.custom_name || activeCameraModule.name}
+                                        {selectedPreview.cameraModuleReference}
                                     </span>
                                 )}
                             </p>
@@ -169,14 +135,13 @@ export default function SystemDetail() {
                                 )}
 
                                 {/* PTZ Controls - only shown if channel has a mapped camera module */}
-                                {activeCameraModule && (
+                                {selectedPreview?.cameraModuleReference && (
                                     <div className="lg:w-[420px] flex-shrink-0">
                                         <div className="card bg-base-200">
                                             <div className="card-body">
                                                 <PTZControls
                                                     systemId={system.id}
-                                                    cameraModule={activeCameraModule.id}
-                                                    moduleInfo={activeCameraModule}
+                                                    cameraModule={selectedPreview.cameraModuleReference}
                                                 />
                                             </div>
                                         </div>
