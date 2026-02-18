@@ -28,7 +28,7 @@ export default function SystemCard({ system }: SystemCardProps) {
                         }}
                         className="flex-1 min-w-0 hover:opacity-70 transition-opacity"
                     >
-                        <h3 className="card-title text-base">{system.name}</h3>
+                        <h3 className="card-title text-base">{system.display_name}</h3>
                         <div className="text-xs text-base-content/50 font-mono mt-1">{system.id}</div>
                     </Link>
                 </div>

@@ -26,7 +26,7 @@ export default function CameraPreviewGrid({ previews, systemId }: CameraPreviewG
                 {displayedPreviews.map((preview, idx) => (
                     <Link
                         key={idx}
-                        to={`/systems/${systemId}?camera=${encodeURIComponent(preview.module)}`}
+                        to={`/systems/${systemId}?channel=${encodeURIComponent(preview.channelId)}`}
                         className="w-48 h-48 rounded-lg overflow-hidden bg-base-300 relative group hover:ring-4 hover:ring-primary transition-all"
                     >
                         <img
