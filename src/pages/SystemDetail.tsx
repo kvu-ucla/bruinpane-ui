@@ -169,8 +169,9 @@ export default function SystemDetail() {
 
 
                     <div className="flex items-center gap-4 w-full h-1/2">
+                        <h2 className="card-title">CPU Load</h2>
                         <iframe
-                            src={`https://placeos-prod.avit.it.ucla.edu/analytics/d-solo/56ce376b-7f8a-409e-bff6-8d2da8155b1a/epiphan-analytics?orgId=1&from=now-24h&to=now&timezone=browser&var-sysid=${id}&panelId=1&title=CPU%20Load&__feature.dashboardSceneSolo=true&refresh=5m`}
+                            src={`https://placeos-prod.avit.it.ucla.edu/analytics/d-solo/56ce376b-7f8a-409e-bff6-8d2da8155b1a/epiphan-analytics?orgId=1&from=now-24h&to=now&timezone=browser&var-sysid=${id}&panelId=1&title=&theme=light&__feature.dashboardSceneSolo=true&refresh=5m`}
                             className="w-full h-full"></iframe>
                     </div>
                 </div>
