@@ -1,5 +1,5 @@
 import type { PlaceSystem, PlaceModule } from '@placeos/ts-client';
-import { querySystems, showModule, showSystem } from '@placeos/ts-client';
+import { getModule, querySystems, showModule, showSystem } from '@placeos/ts-client';
 import { firstValueFrom } from 'rxjs';
 import { SYSTEM_FEATURE } from '../models';
 
@@ -55,7 +55,13 @@ export const getSystemModules = async (moduleIds: Array<string>): Promise<Array<
   }
 };
 
-export const executeCameraCommand = (module: string, camera: string, method: string, args: Array<unknown>) => {
-  console.log(`Executing camera ${camera} with ${method}`);
-  console.log(`Executing module ${module} with ${args}`);
-}
+export const executePTZCommand = async (
+  systemId: string,
+  moduleRef: string,
+  method: string,
+  args: Array<unknown> = []
+): Promise<void> => {
+  const module = getModule(systemId, moduleRef);
+  if (!module) return;
+  await module.execute(method, args);
+};
