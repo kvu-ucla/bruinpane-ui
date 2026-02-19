@@ -14,10 +14,9 @@ type PTZControlsProps = {
   systemId: string;
   cameraModule: string;
   moduleInfo?: PlaceModule;
-  latencyMs?: number;
 };
 
-export const PTZControls = ({ systemId, cameraModule, moduleInfo, latencyMs = 0 }: PTZControlsProps) => {
+export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsProps) => {
   const [isExecuting, setIsExecuting] = useState(false);
   const currentDirectionRef = useRef<JoystickDirection>(JoystickDirection.Stop);
   const currentZoomRef = useRef<'tele' | 'wide' | null>(null);
@@ -41,7 +40,7 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo, latencyMs = 0 
     }
     moveTimeout.current = setTimeout(() => {
       void executeCommand(command);
-    }, Math.max(50, latencyMs));
+    }, 50);
   };
 
   const handleDirectionChange = (newDir: JoystickDirection) => {
