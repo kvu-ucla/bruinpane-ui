@@ -16,7 +16,9 @@ export const SystemCard = ({ system }: SystemCardProps) => {
                 <div className="flex gap-4">
                     {previewsLoading ? (
                         <div className="flex-shrink-0 flex gap-2">
-                            <div className="w-48 h-48 rounded-lg bg-base-300 animate-pulse" />
+                            <div className="w-48 h-48 rounded-lg bg-base-300 animate-pulse-fast" />
+                            <div className="w-48 h-48 rounded-lg bg-base-300 animate-pulse-fast" />
+                            <div className="w-48 h-48 rounded-lg bg-base-300 animate-pulse-fast" />
                         </div>
                     ) : cameraPreviews && cameraPreviews.length > 0 ? (
                         <CameraPreviewGrid

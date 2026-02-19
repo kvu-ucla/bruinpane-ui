@@ -1,6 +1,6 @@
 export const SystemCardSkeleton = () => {
     return (
-        <div className="card bg-base-200 animate-pulse">
+        <div className="card bg-base-200 animate-pulse-fast">
             <div className="card-body p-4">
                 <div className="flex gap-4">
                     <div className="flex-shrink-0 flex gap-2">
