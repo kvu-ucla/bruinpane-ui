@@ -3,9 +3,12 @@ import type { PlaceModule } from '@placeos/ts-client';
 export type CameraPreview = {
     module: string;
     url: string;
-    label: string;       // "Professor View", "Learner View"
-    channelId: string;   // "2", "4" (used for both preview and streaming)
-    cameraModuleReference: string | null; // e.g., "Camera_1", "Camera_2"
+    /** Display name of the channel, e.g. "Professor View", "Learner View" */
+    label: string;
+    /** Epiphan channel ID used for both the preview image and live stream URLs */
+    channelId: string;
+    /** PlaceOS module reference for PTZ control, e.g. "Camera_1"; null if no mapping exists */
+    cameraModuleReference: string | null;
 };
 
 export type ChannelCameraMap = Record<string, string>;

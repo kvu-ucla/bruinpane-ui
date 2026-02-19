@@ -7,14 +7,13 @@ import { SystemDetail } from './pages/SystemDetail';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { useAuth } from "./AuthContext.tsx";
 
-// Create query client
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: 5 * 60 * 1000,      // Data fresh for 5 minutes
-            gcTime: 10 * 60 * 1000,        // Keep in cache for 10 minutes (renamed from cacheTime)
-            refetchOnWindowFocus: false,    // Don't refetch on tab focus
-            retry: 1,                       // Retry failed requests once
+            staleTime: 5 * 60 * 1000,
+            gcTime: 10 * 60 * 1000,
+            refetchOnWindowFocus: false,
+            retry: 1,
         },
     },
 });
@@ -58,7 +57,6 @@ export const App = () => {
                 </Routes>
             </HashRouter>
 
-            {/* React Query DevTools - only shows in development */}
             <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
     );

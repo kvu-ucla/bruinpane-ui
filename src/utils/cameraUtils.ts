@@ -5,10 +5,6 @@ import { CameraPreview, ChannelCameraMap } from '../types';
 
 const DOMAIN = "placeos-prod.avit.it.ucla.edu";
 
-// ─────────────────────────────────────────────
-// Generic Binding Helper
-// ─────────────────────────────────────────────
-
 const bindAndGet = async <T>(
     systemId: string,
     moduleName: string,
@@ -38,10 +34,6 @@ const bindAndGet = async <T>(
     }
 };
 
-// ─────────────────────────────────────────────
-// Type Guards
-// ─────────────────────────────────────────────
-
 const isChannelArray = (v: unknown): v is { id: string; name: string }[] =>
     Array.isArray(v) && v.every(item =>
         typeof item === 'object' &&
@@ -57,10 +49,6 @@ const isChannelCameraMap = (v: unknown): v is ChannelCameraMap =>
     Object.entries(v).every(
         ([k, val]) => typeof k === 'string' && typeof val === 'string'
     );
-
-// ─────────────────────────────────────────────
-// Viewer Channels
-// ─────────────────────────────────────────────
 
 export const getViewerChannels = async (systemId: string): Promise<{ id: string; name: string }[]> => {
     try {
@@ -87,10 +75,6 @@ export const getViewerChannels = async (systemId: string): Promise<{ id: string;
     }
 };
 
-// ─────────────────────────────────────────────
-// Channel → Camera Mapping
-// ─────────────────────────────────────────────
-
 export const getChannelCameraMap = async (systemId: string): Promise<ChannelCameraMap> => {
     try {
         console.log(`[getChannelCameraMap] Starting for system: ${systemId}`);
@@ -112,10 +96,6 @@ export const getChannelCameraMap = async (systemId: string): Promise<ChannelCame
     }
 };
 
-// ─────────────────────────────────────────────
-// Camera Module Resolution
-// ─────────────────────────────────────────────
-
 export const resolveCameraModule = (
     channelId: string,
     channelCameraMap: ChannelCameraMap
@@ -126,10 +106,6 @@ export const resolveCameraModule = (
     return { cameraModuleReference: null };
 };
 
-// ─────────────────────────────────────────────
-// Generate Camera Previews
-// ─────────────────────────────────────────────
-
 export const generateCameraPreviews = async (
     systemId: string,
     modules: PlaceModule[]
@@ -138,7 +114,6 @@ export const generateCameraPreviews = async (
         console.log(`[generateCameraPreviews] Starting for system: ${systemId}`);
         console.log(`[generateCameraPreviews] Total modules:`, modules.length);
 
-        // Find all Recording modules
         const recordingModules = modules.filter(m => m.name === 'Recording');
         console.log(`[generateCameraPreviews] Found ${recordingModules.length} Recording modules`);
 
@@ -147,7 +122,6 @@ export const generateCameraPreviews = async (
             return [];
         }
 
-        // Get Recording_1 (first Recording module)
         const recording1Module = recordingModules[0];
         const recording1 = {
             id: recording1Module.id,
@@ -159,7 +133,6 @@ export const generateCameraPreviews = async (
 
         console.log(`[generateCameraPreviews] Recording_1 details:`, recording1);
 
-        // Extract IP address from IP or URI
         let address: string | null = null;
         if (recording1.ip) {
             address = recording1.ip;
@@ -178,7 +151,6 @@ export const generateCameraPreviews = async (
             return [];
         }
 
-        // Fetch viewer channels and camera map in parallel
         console.log(`[generateCameraPreviews] Fetching viewer channels and camera map...`);
         const [viewerChannels, channelCameraMap] = await Promise.all([
             getViewerChannels(systemId),
@@ -193,7 +165,6 @@ export const generateCameraPreviews = async (
             return [];
         }
 
-        // Generate previews using channel IDs for both preview and streaming
         const previews: CameraPreview[] = viewerChannels.map(channel => {
             const { cameraModuleReference } = resolveCameraModule(
                 channel.id,

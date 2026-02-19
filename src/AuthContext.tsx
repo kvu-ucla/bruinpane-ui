@@ -12,7 +12,6 @@ type AuthData = {
   logOut: () => void;
 };
 
-// Create the context
 const AuthContext = createContext<AuthData | null>(null);
 
 export type PlaceSettings = {
@@ -49,7 +48,6 @@ const setupPlace = (settings: PlaceSettings): Promise<void> => {
       settings.mock ||
       location.href.includes("mock=true") ||
       localStorage.getItem("mock") === "true";
-  // Generate configuration object
   const config: PlaceAuthOptions = {
     auth_type: "auth_code",
     scope: "public",
@@ -70,20 +68,17 @@ const setupPlace = (settings: PlaceSettings): Promise<void> => {
   return setup(config);
 };
 
-// --- The Auth Provider ---
-
 type AuthProviderProps = { children: ReactNode };
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<PlaceUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true); // Crucial for the initial load
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.debug = true;
     const checkAuth = async () => {
       try {
-        // This is the single function call on load
         await setupPlace({
           route: "/control",
           use_domain: false,
@@ -94,17 +89,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(user);
         setIsAuthenticated(true);
       } catch {
-        // If the API call fails, the user is not logged in
         setUser(null);
         setIsAuthenticated(false);
       } finally {
-        // This is critical to unblock the UI
+        // Unblocks the UI regardless of auth outcome
         setLoading(false);
       }
     };
 
     checkAuth();
-  }, []); // Empty array ensures this runs only once on app startup
+  }, []);
 
   const logOut = () => logout();
 
@@ -117,7 +111,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   return (
       <AuthContext.Provider value={value}>
-        {/* Don't render children until the initial check is complete */}
         {!loading && children}
       </AuthContext.Provider>
   );

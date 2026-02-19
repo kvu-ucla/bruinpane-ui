@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 
-// Full runtime-safe enum object
 export const JoystickDirection = {
   Up: "up",
   Down: "down",
@@ -37,19 +36,17 @@ export const Joystick = ({ onDirectionChange }: JoystickProps) => {
 
     const dx = clientX - centerX;
     const dy = clientY - centerY;
-    const threshold = 30; // Threshold for 1.5x larger joystick
+    const threshold = 30;
 
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
 
     let newDirection: JoystickDirection = JoystickDirection.Stop;
 
-    // More robust direction calculation
     if (absDx > threshold || absDy > threshold) {
       const horizontal = absDx > threshold ? (dx < 0 ? "left" : "right") : "";
       const vertical = absDy > threshold ? (dy < 0 ? "up" : "down") : "";
 
-      // Fixed direction mapping
       if (vertical && horizontal) {
         const combined = vertical + horizontal;
         switch (combined) {
@@ -141,7 +138,6 @@ export const Joystick = ({ onDirectionChange }: JoystickProps) => {
             className="relative h-96 w-96 rounded-full bg-gray-300 text-white select-none cursor-pointer"
             style={{ touchAction: "none", userSelect: "none" }}
         >
-          {/* Directional arrows */}
           <div className="absolute inset-0 flex items-center text-8xl text-gray-600">
             <span style={{ transform: "translateX(-0.75rem)" }}>◀</span>
           </div>
@@ -155,7 +151,6 @@ export const Joystick = ({ onDirectionChange }: JoystickProps) => {
             <span style={{ transform: "translateY(0.75rem)" }}>▼</span>
           </div>
 
-          {/* Diagonal direction indicators */}
           <div className="absolute top-16 left-16 text-3xl text-gray-400">
             <span>◢</span>
           </div>
@@ -169,7 +164,6 @@ export const Joystick = ({ onDirectionChange }: JoystickProps) => {
             <span>◤</span>
           </div>
 
-          {/* Thumb zone */}
           <div className="absolute inset-24 flex items-center justify-center rounded-full bg-gray-100">
             <div className="relative w-full h-full">
               <div

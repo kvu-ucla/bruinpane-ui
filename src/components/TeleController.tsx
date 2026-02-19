@@ -23,19 +23,17 @@ export const TeleController = ({ onZoomStart, onZoomStop }: TeleControllerProps)
 
         setZoomLevel(percentage);
 
-        // Determine zoom direction based on position relative to center
         const center = 50;
-        const deadZone = 10; // 10% dead zone around center
+        const deadZone = 10;
 
         let newZoom: ZoomDirection | null = null;
 
         if (percentage > center + deadZone) {
-            newZoom = "tele"; // Zoom in (top half)
+            newZoom = "tele";
         } else if (percentage < center - deadZone) {
-            newZoom = "wide"; // Zoom out (bottom half)
+            newZoom = "wide";
         }
 
-        // Only send commands when zoom direction changes
         if (newZoom !== currentZoomRef.current) {
             if (currentZoomRef.current !== null) {
                 onZoomStop(); // Stop previous zoom
@@ -75,10 +73,8 @@ export const TeleController = ({ onZoomStart, onZoomStop }: TeleControllerProps)
 
     return (
         <div className="flex flex-col items-center h-96">
-            {/* Tele label */}
             <div className="text-lg font-mono text-gray-600 mb-3 select-none">T</div>
 
-            {/* Slider */}
             <div
                 ref={sliderRef}
                 className="relative h-72 w-12 bg-gray-300 rounded-full cursor-pointer select-none border-2 border-gray-400"
@@ -87,17 +83,10 @@ export const TeleController = ({ onZoomStart, onZoomStop }: TeleControllerProps)
                 onPointerUp={handlePointerUp}
                 style={{ touchAction: "none" }}
             >
-                {/* Track */}
                 <div className="absolute inset-1.5 bg-gray-100 rounded-full"></div>
-
-                {/* Center mark */}
                 <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-gray-500 transform -translate-y-1/2"></div>
-
-                {/* Zoom indicators */}
                 <div className="absolute -left-8 top-3 text-base text-gray-500">+</div>
                 <div className="absolute -left-8 bottom-3 text-base text-gray-500">-</div>
-
-                {/* Slider thumb */}
                 <div
                     className={`absolute left-1/2 w-9 h-9 rounded-full shadow-md border-2 transform -translate-x-1/2 -translate-y-1/2 transition-colors duration-75 ${
                         isDragging
@@ -108,7 +97,6 @@ export const TeleController = ({ onZoomStart, onZoomStop }: TeleControllerProps)
                 ></div>
             </div>
 
-            {/* Wide label */}
             <div className="text-lg font-mono text-gray-600 mt-3 select-none">W</div>
         </div>
     );

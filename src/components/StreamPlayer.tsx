@@ -62,28 +62,21 @@ export const StreamPlayer = ({ systemId, recordingModuleIp, channelId }: StreamP
                 url: streamUrl
             };
 
+            // Relaxed latency tolerances reduce rebuffering at the cost of a larger delay;
+            // liveBufferLatencyChaseOnStalled is disabled as it causes stuttering on Epiphan streams.
             const playerOptions: PlayerOptions = {
-                // Core settings
                 enableWorker: true,
-                enableStashBuffer: true,  // Changed to true for better buffering
-                stashInitialSize: 384,    // Increased from 128 to reduce initial buffering
-
-                // More relaxed latency settings to reduce rebuffering
+                enableStashBuffer: true,
+                stashInitialSize: 384,
                 liveBufferLatencyChasing: true,
-                liveBufferLatencyMaxLatency: 3.0,     // Increased from 1.0 to 3.0 seconds
-                liveBufferLatencyMinRemain: 1.0,      // Increased from 0.3 to 1.0 seconds
-                liveBufferLatencyChaseOnStalled: false, // Disabled - can cause stuttering
-
-                // Sync settings
-                liveSyncDurationCount: 5,  // Increased from 3 for more buffer
-
-                // Audio/Video sync
+                liveBufferLatencyMaxLatency: 3.0,
+                liveBufferLatencyMinRemain: 1.0,
+                liveBufferLatencyChaseOnStalled: false,
+                liveSyncDurationCount: 5,
                 fixAudioTimestampGap: true,
-
-                // More conservative buffer cleanup
                 autoCleanupSourceBuffer: true,
-                autoCleanupMaxBackwardDuration: 10,  // Increased from 5
-                autoCleanupMinBackwardDuration: 5    // Increased from 3
+                autoCleanupMaxBackwardDuration: 10,
+                autoCleanupMinBackwardDuration: 5,
             };
 
             const player = mpegts.createPlayer(playerConfig, playerOptions);
@@ -103,7 +96,6 @@ export const StreamPlayer = ({ systemId, recordingModuleIp, channelId }: StreamP
                 setError(`Error: ${errType}`);
             });
 
-            // Monitor buffering events
             video.addEventListener('waiting', () => {
                 console.log('Buffering...');
                 setIsBuffering(true);
@@ -133,7 +125,6 @@ export const StreamPlayer = ({ systemId, recordingModuleIp, channelId }: StreamP
             setError('Browser does not support MSE');
         }
 
-        // More conservative latency management
         const latencyMonitor = setInterval(() => {
             if (videoRef.current && videoRef.current.buffered.length > 0) {
                 const bufferedEnd = videoRef.current.buffered.end(0);
@@ -142,13 +133,13 @@ export const StreamPlayer = ({ systemId, recordingModuleIp, channelId }: StreamP
 
                 setLatency(Number(bufferLength.toFixed(2)));
 
-                // Only jump if buffer is VERY large (>5 seconds) to avoid interruptions
+                // Jump only when the buffer grows very large to avoid interrupting normal playback
                 if (bufferLength > 5.0 && !videoRef.current.paused) {
                     console.log('Buffer very large, jumping to reduce latency');
-                    videoRef.current.currentTime = bufferedEnd - 2.0; // Keep 2 seconds buffer
+                    videoRef.current.currentTime = bufferedEnd - 2.0;
                 }
             }
-        }, 2000); // Check every 2 seconds instead of 1
+        }, 2000);
 
         return () => {
             clearInterval(latencyMonitor);
@@ -197,7 +188,7 @@ export const StreamPlayer = ({ systemId, recordingModuleIp, channelId }: StreamP
                         controls
                         muted
                         className="w-full h-full"
-                        playsInline  // Important for mobile
+                        playsInline
                     />
                 </div>
             </div>

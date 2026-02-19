@@ -20,7 +20,6 @@ export const SystemDetail = () => {
     const modules = system?.loadedModules || [];
     const previews = cameraPreviews || [];
 
-    // Set initial selected channel from URL or first preview
     useEffect(() => {
         if (previews.length > 0) {
             const channelParam = searchParams.get('channel');
@@ -123,7 +122,6 @@ export const SystemDetail = () => {
                     {previews.length > 0 && recordingModule && recordingAddress && (
                         <>
                             <div className="flex flex-col lg:flex-row gap-6">
-                                {/* Stream Player */}
                                 {selectedChannelId && (
                                     <div className="flex-1 min-w-0">
                                         <StreamPlayer
@@ -134,7 +132,6 @@ export const SystemDetail = () => {
                                     </div>
                                 )}
 
-                                {/* PTZ Controls */}
                                 {selectedPreview && (
                                     <div className="lg:w-[420px] flex-shrink-0">
                                         <div className="card bg-base-200">
@@ -155,7 +152,6 @@ export const SystemDetail = () => {
                                 )}
                             </div>
 
-                            {/* Camera Selector */}
                             <CameraSelector
                                 cameraPreviews={previews}
                                 selectedCamera={selectedChannelId}
@@ -164,7 +160,6 @@ export const SystemDetail = () => {
                         </>
                     )}
 
-                    {/* No cameras available */}
                     {previews.length === 0 && (
                         <div className="alert alert-info">
                             <span>No active camera feeds available for this system</span>
