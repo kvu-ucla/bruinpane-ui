@@ -1,17 +1,38 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useInfiniteSystems } from '../hooks/useSystems';
 import { SystemCard } from '../components/SystemCard';
+import { SystemCardSkeleton } from '../components/SystemCardSkeleton';
 
 export const SystemsList = () => {
     const [searchQuery, setSearchQuery] = useState('');
-    const { data, isLoading, isError, error } = useInfiniteSystems();
+    const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteSystems();
+    const sentinelRef = useRef<HTMLDivElement>(null);
 
     const systems = data?.pages.flatMap(page => page.systems) ?? [];
-    const filteredSystems = systems.filter(system =>
-        system.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        system.id?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredSystems = systems
+        .filter(system =>
+            system.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            system.id?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .sort((a, b) => (a.display_name ?? a.name ?? '').localeCompare(b.display_name ?? b.name ?? ''));
+
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+                    void fetchNextPage();
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
     return (
         <div className="h-full flex flex-col">
@@ -37,8 +58,10 @@ export const SystemsList = () => {
 
             <div className="flex-1 overflow-y-auto p-6">
                 {isLoading && (
-                    <div className="flex items-center justify-center h-64">
-                        <span className="loading loading-spinner loading-lg"></span>
+                    <div className="space-y-2">
+                        {Array.from({ length: 5 }, (_, i) => (
+                            <SystemCardSkeleton key={i} />
+                        ))}
                     </div>
                 )}
 
@@ -58,6 +81,16 @@ export const SystemsList = () => {
                     <div className="space-y-2">
                         {filteredSystems.map((system) => (
                             <SystemCard key={system.id} system={system} />
+                        ))}
+                    </div>
+                )}
+
+                <div ref={sentinelRef} className="h-4" />
+
+                {isFetchingNextPage && (
+                    <div className="space-y-2 mt-2">
+                        {Array.from({ length: 5 }, (_, i) => (
+                            <SystemCardSkeleton key={i} />
                         ))}
                     </div>
                 )}
