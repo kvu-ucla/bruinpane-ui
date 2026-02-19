@@ -179,12 +179,17 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-8">
-        <TeleController
-          onZoomStart={handleZoomStart}
-          onZoomStop={handleZoomStop}
-        />
-        <Joystick onDirectionChange={handleDirectionChange} />
+      <div style={{ height: '307px', overflow: 'hidden' }}>
+        <div
+          className="flex items-center justify-center gap-8"
+          style={{ transform: 'scale(0.8)', transformOrigin: 'top center' }}
+        >
+          <TeleController
+            onZoomStart={handleZoomStart}
+            onZoomStop={handleZoomStop}
+          />
+          <Joystick onDirectionChange={handleDirectionChange} />
+        </div>
       </div>
 
       <button
