@@ -156,13 +156,11 @@ export const SystemDetail = () => {
                             </div>
 
                             {/* Camera Selector */}
-                            {previews.length > 1 && (
-                                <CameraSelector
-                                    cameraPreviews={previews}
-                                    selectedCamera={selectedChannelId}
-                                    onCameraSelect={handleCameraSelect}
-                                />
-                            )}
+                            <CameraSelector
+                                cameraPreviews={previews}
+                                selectedCamera={selectedChannelId}
+                                onCameraSelect={handleCameraSelect}
+                            />
                         </>
                     )}
 

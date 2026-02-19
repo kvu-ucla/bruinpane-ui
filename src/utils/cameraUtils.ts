@@ -118,33 +118,11 @@ export const getChannelCameraMap = async (systemId: string): Promise<ChannelCame
 
 export const resolveCameraModule = (
     channelId: string,
-    channelName: string,
     channelCameraMap: ChannelCameraMap
 ): { cameraModuleReference: string | null } => {
-    // Priority 1: Explicit mapping
     if (channelCameraMap[channelId]) {
-        const reference = channelCameraMap[channelId]; // e.g., "Camera_1"
-        console.log(`[resolveCameraModule] ✅ Explicit map: ${channelName} → ${reference}`);
-        return { cameraModuleReference: reference };
+        return { cameraModuleReference: channelCameraMap[channelId] };
     }
-
-    // Priority 2: Convention-based name matching
-    const words = channelName
-        .toLowerCase()
-        .replace(/\s+view$/i, '')
-        .split(/\s+/)
-        .filter(w => w.length > 3);
-
-    const matchedReference = words
-        .map(word => `Camera_${word.charAt(0).toUpperCase() + word.slice(1)}`)
-        .find(ref => ref !== null) || null;
-
-    if (matchedReference) {
-        console.log(`[resolveCameraModule] ✅ Convention match: ${channelName} → ${matchedReference}`);
-        return { cameraModuleReference: matchedReference };
-    }
-
-    console.warn(`[resolveCameraModule] ⚠️ No camera found for channel: ${channelName}`);
     return { cameraModuleReference: null };
 };
 
@@ -219,7 +197,6 @@ export const generateCameraPreviews = async (
         const previews: CameraPreview[] = viewerChannels.map(channel => {
             const { cameraModuleReference } = resolveCameraModule(
                 channel.id,
-                channel.name,
                 channelCameraMap
             );
 
