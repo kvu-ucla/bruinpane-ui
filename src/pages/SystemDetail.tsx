@@ -134,15 +134,21 @@ export const SystemDetail = () => {
                                     </div>
                                 )}
 
-                                {/* PTZ Controls - only shown if channel has a mapped camera module */}
-                                {selectedPreview?.cameraModuleReference && (
+                                {/* PTZ Controls */}
+                                {selectedPreview && (
                                     <div className="lg:w-[420px] flex-shrink-0">
                                         <div className="card bg-base-200">
                                             <div className="card-body">
-                                                <PTZControls
-                                                    systemId={system.id}
-                                                    cameraModule={selectedPreview.cameraModuleReference}
-                                                />
+                                                {selectedPreview.cameraModuleReference ? (
+                                                    <PTZControls
+                                                        systemId={system.id}
+                                                        cameraModule={selectedPreview.cameraModuleReference}
+                                                    />
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-full min-h-32 text-sm text-base-content/50 text-center">
+                                                        There are no camera controls for this feed
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -168,11 +174,14 @@ export const SystemDetail = () => {
                     )}
 
 
-                    <div className="flex items-center gap-4 w-full h-1/2">
-                        <h2 className="card-title">CPU Load</h2>
-                        <iframe
-                            src={`https://placeos-prod.avit.it.ucla.edu/analytics/d-solo/56ce376b-7f8a-409e-bff6-8d2da8155b1a/epiphan-analytics?orgId=1&from=now-24h&to=now&timezone=browser&var-sysid=${id}&panelId=1&title=&theme=light&__feature.dashboardSceneSolo=true&refresh=5m`}
-                            className="w-full h-full"></iframe>
+                    <div className="card bg-base-200">
+                        <div className="card-body">
+                            <h2 className="card-title">CPU Load</h2>
+                            <iframe
+                                src={`https://placeos-prod.avit.it.ucla.edu/analytics/d-solo/56ce376b-7f8a-409e-bff6-8d2da8155b1a/epiphan-analytics?orgId=1&from=now-24h&to=now&timezone=browser&var-sysid=${id}&panelId=1&title=&theme=light&__feature.dashboardSceneSolo=true&refresh=5m`}
+                                className="w-full h-96 rounded-lg"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
