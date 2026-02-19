@@ -1,21 +1,17 @@
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSystemById, getSystemModules, getSystemsPage } from '../services/placeos';
 import { generateCameraPreviews } from '../utils/cameraUtils';
 import type { SystemWithModules } from '../types';
 
-const PAGE_SIZE = 20;
-
-export const useInfiniteSystems = () => {
+export const useSystems = () => {
     const queryClient = useQueryClient();
 
-    return useInfiniteQuery({
-        queryKey: ['systems', 'infinite'],
-        queryFn: async ({ pageParam = 0 }) => {
-            console.log(`[useInfiniteSystems] Fetching page at offset ${pageParam}`);
+    return useQuery({
+        queryKey: ['systems'],
+        queryFn: async () => {
+            const { data: systemsArray } = await getSystemsPage({ limit: 500, offset: 0 });
 
-            const { data: systemsArray, total } = await getSystemsPage({ limit: PAGE_SIZE, offset: pageParam });
-
-            const systemsWithData = await Promise.all(
+            return Promise.all(
                 systemsArray.map(async (system): Promise<SystemWithModules> => {
                     if (!system.modules || system.modules.length === 0) {
                         return { ...system, loadedModules: [], camera_previews: [] };
@@ -43,17 +39,7 @@ export const useInfiniteSystems = () => {
                     }
                 })
             );
-
-            return {
-                systems: systemsWithData,
-                nextOffset: pageParam + PAGE_SIZE,
-                hasMore: pageParam + PAGE_SIZE < total,
-                total,
-            };
         },
-        getNextPageParam: (lastPage) =>
-            lastPage.hasMore ? lastPage.nextOffset : undefined,
-        initialPageParam: 0,
         staleTime: 5 * 60 * 1000,
     });
 };
