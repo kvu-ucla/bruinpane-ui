@@ -16,6 +16,7 @@ export const SystemDetail = () => {
     const { data: cameraPreviews } = useCameraPreviews(id);
 
     const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
+    const [streamLatencyMs, setStreamLatencyMs] = useState(0);
 
     const modules = system?.loadedModules || [];
     const previews = cameraPreviews || [];
@@ -130,6 +131,7 @@ export const SystemDetail = () => {
                                             systemId={system.id}
                                             recordingModuleIp={recordingAddress}
                                             channelId={selectedChannelId}
+                                            onLatencyChange={setStreamLatencyMs}
                                         />
                                     </div>
                                 )}
@@ -142,6 +144,7 @@ export const SystemDetail = () => {
                                                 <PTZControls
                                                     systemId={system.id}
                                                     cameraModule={selectedPreview.cameraModuleReference}
+                                                    latencyMs={streamLatencyMs}
                                                 />
                                             </div>
                                         </div>

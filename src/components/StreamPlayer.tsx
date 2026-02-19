@@ -26,11 +26,12 @@ type StreamPlayerProps = {
     systemId: string;
     recordingModuleIp: string;
     channelId: string | null;
+    onLatencyChange?: (latencyMs: number) => void;
 };
 
 const DOMAIN = 'placeos-prod.avit.it.ucla.edu';
 
-export const StreamPlayer = ({ systemId, recordingModuleIp, channelId }: StreamPlayerProps) => {
+export const StreamPlayer = ({ systemId, recordingModuleIp, channelId, onLatencyChange }: StreamPlayerProps) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const playerRef = useRef<mpegts.Player | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -141,6 +142,7 @@ export const StreamPlayer = ({ systemId, recordingModuleIp, channelId }: StreamP
                 const bufferLength = bufferedEnd - currentTime;
 
                 setLatency(Number(bufferLength.toFixed(2)));
+                onLatencyChange?.(bufferLength * 1000);
 
                 // Only jump if buffer is VERY large (>5 seconds) to avoid interruptions
                 if (bufferLength > 5.0 && !videoRef.current.paused) {
