@@ -1,44 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSystemById, getSystemModules, getSystemsPage } from '../services/placeos';
 import { generateCameraPreviews } from '../utils/cameraUtils';
-import type { SystemWithModules } from '../types';
 
 export const useSystems = () => {
-    const queryClient = useQueryClient();
-
     return useQuery({
         queryKey: ['systems'],
         queryFn: async () => {
-            const { data: systemsArray } = await getSystemsPage({ limit: 500, offset: 0 });
-
-            return Promise.all(
-                systemsArray.map(async (system): Promise<SystemWithModules> => {
-                    if (!system.modules || system.modules.length === 0) {
-                        return { ...system, loadedModules: [], camera_previews: [] };
-                    }
-
-                    try {
-                        const modules = await getSystemModules([...system.modules]);
-                        const previews = await generateCameraPreviews(system.id, modules);
-
-                        queryClient.setQueryData(['system', system.id], {
-                            ...system,
-                            loadedModules: modules,
-                            camera_previews: previews.length > 0 ? previews : undefined
-                        });
-                        queryClient.setQueryData(['cameraPreviews', system.id], previews);
-
-                        return {
-                            ...system,
-                            loadedModules: modules,
-                            camera_previews: previews.length > 0 ? previews : undefined
-                        };
-                    } catch (err) {
-                        console.error(`Failed to load data for system ${system.id}:`, err);
-                        return { ...system, loadedModules: [], camera_previews: [] };
-                    }
-                })
-            );
+            const { data } = await getSystemsPage({ limit: 500, offset: 0 });
+            return data;
         },
         staleTime: 5 * 60 * 1000,
     });
@@ -76,21 +45,22 @@ export const useSystem = (id: string | undefined) => {
     });
 };
 
-export const useCameraPreviews = (systemId: string | undefined) => {
+export const useCameraPreviews = (
+    systemId: string | undefined,
+    existingModuleIds?: ReadonlyArray<string>
+) => {
     return useQuery({
         queryKey: ['cameraPreviews', systemId],
         queryFn: async () => {
             if (!systemId) throw new Error('No system ID');
 
-            console.log(`[useCameraPreviews] Fetching previews for ${systemId}`);
+            const moduleIds = existingModuleIds
+                ? [...existingModuleIds]
+                : await getSystemById(systemId).then(s => [...(s.modules ?? [])]);
 
-            const system = await getSystemById(systemId);
+            if (moduleIds.length === 0) return [];
 
-            if (!system.modules || system.modules.length === 0) {
-                return [];
-            }
-
-            const modules = await getSystemModules([...system.modules]);
+            const modules = await getSystemModules(moduleIds);
             return generateCameraPreviews(systemId, modules);
         },
         enabled: !!systemId,

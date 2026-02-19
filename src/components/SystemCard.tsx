@@ -1,31 +1,31 @@
 import { Link } from 'react-router-dom';
-import type { SystemWithModules } from '../types';
+import type { PlaceSystem } from '@placeos/ts-client';
+import { useCameraPreviews } from '../hooks/useSystems';
 import { CameraPreviewGrid } from './CameraPreviewGrid';
 
 type SystemCardProps = {
-    system: SystemWithModules;
+    system: PlaceSystem;
 };
 
 export const SystemCard = ({ system }: SystemCardProps) => {
-    const hasCameras = system.camera_previews && system.camera_previews.length > 0;
+    const { data: cameraPreviews, isLoading: previewsLoading } = useCameraPreviews(system.id, system.modules);
 
     return (
         <div className="card bg-base-200">
             <div className="card-body p-4">
                 <div className="flex gap-4">
-                    {hasCameras && (
+                    {previewsLoading ? (
+                        <div className="flex-shrink-0 flex gap-2">
+                            <div className="w-48 h-48 rounded-lg bg-base-300 animate-pulse" />
+                        </div>
+                    ) : cameraPreviews && cameraPreviews.length > 0 ? (
                         <CameraPreviewGrid
-                            previews={system.camera_previews ?? []}
+                            previews={cameraPreviews}
                             systemId={system.id}
                         />
-                    )}
+                    ) : null}
                     <Link
                         to={`/systems/${system.id}`}
-                        state={{
-                            system,
-                            modules: system.loadedModules,
-                            cameraPreviews: system.camera_previews 
-                        }}
                         className="flex-1 min-w-0 hover:opacity-70 transition-opacity"
                     >
                         <h3 className="card-title text-base">{system.display_name}</h3>
