@@ -1,6 +1,10 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getSystemById, getSystemModules, getSystemsPage } from '../services/placeos';
-import { generateCameraPreviews } from '../utils/cameraUtils';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import type { Subscription } from 'rxjs';
+import type { PlaceModule } from '@placeos/ts-client';
+import { bindModuleStatus, getSystemById, getSystemModules, getSystemsPage } from '../services/placeos';
+import { generateCameraPreviews, getRecordingAddress, isChannelArray, isChannelCameraMap } from '../utils/cameraUtils';
+import type { CameraPreview, ChannelCameraMap } from '../types';
 
 export const useSystems = () => {
     return useQuery({
@@ -14,56 +18,118 @@ export const useSystems = () => {
 };
 
 export const useSystem = (id: string | undefined) => {
-    const queryClient = useQueryClient();
-
     return useQuery({
         queryKey: ['system', id],
         queryFn: async () => {
             if (!id) throw new Error('No system ID provided');
-
-            console.log(`[useSystem] Fetching system ${id}`);
-
-            const system = await getSystemById(id);
-
-            if (!system.modules || system.modules.length === 0) {
-                return { ...system, loadedModules: [], camera_previews: [] };
-            }
-
-            const modules = await getSystemModules([...system.modules]);
-            const previews = await generateCameraPreviews(system.id, modules);
-
-            queryClient.setQueryData(['cameraPreviews', id], previews);
-
-            return {
-                ...system,
-                loadedModules: modules,
-                camera_previews: previews.length > 0 ? previews : undefined
-            };
+            return getSystemById(id);
         },
         enabled: !!id,
         staleTime: 5 * 60 * 1000,
     });
 };
 
+export const useIsRecording = (systemId: string): boolean => {
+    const [isRecording, setIsRecording] = useState(false);
+
+    useEffect(() => {
+        const { observable, unbind } = bindModuleStatus<unknown>(systemId, 'Recording_1', 'active_recordings');
+        const sub = observable.subscribe((value) => {
+            setIsRecording(Array.isArray(value) && value.length > 0);
+        });
+        return () => {
+            sub.unsubscribe();
+            unbind();
+        };
+    }, [systemId]);
+
+    return isRecording;
+};
+
+export const useAutoframe = (systemId: string, cameraModule: string): boolean | null => {
+    const [isAutoframe, setIsAutoframe] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const { observable, unbind } = bindModuleStatus<unknown>(systemId, cameraModule, 'autoframe');
+        const sub = observable.subscribe((value) => {
+            setIsAutoframe(typeof value === 'boolean' ? value : null);
+        });
+        return () => {
+            sub.unsubscribe();
+            unbind();
+        };
+    }, [systemId, cameraModule]);
+
+    return isAutoframe;
+};
+
 export const useCameraPreviews = (
     systemId: string | undefined,
     existingModuleIds?: ReadonlyArray<string>
-) => {
-    return useQuery({
-        queryKey: ['cameraPreviews', systemId],
-        queryFn: async () => {
-            if (!systemId) throw new Error('No system ID');
+): { data: Array<CameraPreview>; isLoading: boolean; recordingAddress: string | null } => {
+    const [previews, setPreviews] = useState<Array<CameraPreview>>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [recordingAddress, setRecordingAddress] = useState<string | null>(null);
 
+    useEffect(() => {
+        if (!systemId) {
+            setIsLoading(false);
+            return undefined;
+        }
+
+        let cancelled = false;
+        let channelsSub: Subscription | null = null;
+        let cameraMapSub: Subscription | null = null;
+        let channelsUnbind: (() => void) | null = null;
+        let cameraMapUnbind: (() => void) | null = null;
+
+        let modules: Array<PlaceModule> = [];
+        let currentChannels: Array<{ id: string; name: string }> = [];
+        let currentCameraMap: ChannelCameraMap = {};
+
+        const updatePreviews = () => {
+            setPreviews(generateCameraPreviews(modules, currentChannels, currentCameraMap));
+            setIsLoading(false);
+        };
+
+        const init = async () => {
             const moduleIds = existingModuleIds
                 ? [...existingModuleIds]
                 : await getSystemById(systemId).then(s => [...(s.modules ?? [])]);
 
-            if (moduleIds.length === 0) return [];
+            modules = await getSystemModules(moduleIds);
+            if (cancelled) return;
+            setRecordingAddress(getRecordingAddress(modules));
 
-            const modules = await getSystemModules(moduleIds);
-            return generateCameraPreviews(systemId, modules);
-        },
-        enabled: !!systemId,
-        staleTime: 5 * 60 * 1000,
-    });
+            const channelsBinding = bindModuleStatus<unknown>(systemId, 'Recording_1', 'channels');
+            channelsUnbind = channelsBinding.unbind;
+            channelsSub = channelsBinding.observable.subscribe((value) => {
+                if (isChannelArray(value)) {
+                    currentChannels = value;
+                    updatePreviews();
+                }
+            });
+
+            const cameraMapBinding = bindModuleStatus<unknown>(systemId, 'Recording_1', 'camera_map');
+            cameraMapUnbind = cameraMapBinding.unbind;
+            cameraMapSub = cameraMapBinding.observable.subscribe((value) => {
+                if (isChannelCameraMap(value)) {
+                    currentCameraMap = value;
+                    updatePreviews();
+                }
+            });
+        };
+
+        void init();
+
+        return () => {
+            cancelled = true;
+            channelsSub?.unsubscribe();
+            cameraMapSub?.unsubscribe();
+            channelsUnbind?.();
+            cameraMapUnbind?.();
+        };
+    }, [systemId]);
+
+    return { data: previews, isLoading, recordingAddress };
 };

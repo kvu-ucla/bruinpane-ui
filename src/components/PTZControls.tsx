@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Home } from 'lucide-react';
 import type { PlaceModule } from '@placeos/ts-client';
 import { executePTZCommand } from '../services/placeos';
+import { useAutoframe } from '../hooks/useSystems';
 import { Joystick, JoystickDirection } from './Joystick';
 import { TeleController } from './TeleController';
 
@@ -18,6 +19,7 @@ type PTZControlsProps = {
 
 export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsProps) => {
   const [isExecuting, setIsExecuting] = useState(false);
+  const isAutoframe = useAutoframe(systemId, cameraModule);
   const currentDirectionRef = useRef<JoystickDirection>(JoystickDirection.Stop);
   const currentZoomRef = useRef<'tele' | 'wide' | null>(null);
   const moveTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -201,6 +203,16 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
         <Home size={18} />
         <span>Home Position</span>
       </button>
+
+      {isAutoframe !== null && (
+        <button
+          onClick={() => void executePTZCommand(systemId, cameraModule, 'autoframe', [!isAutoframe])}
+          className={`btn btn-block gap-2 ${isAutoframe ? 'btn-primary' : 'btn-outline'}`}
+        >
+          <span>Autoframe</span>
+          <span className="text-xs opacity-70">{isAutoframe ? 'On' : 'Off'}</span>
+        </button>
+      )}
     </div>
   );
 }

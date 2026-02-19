@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import type { PlaceModule } from '@placeos/ts-client';
 import { useSystem, useCameraPreviews } from '../hooks/useSystems';
 import { StreamPlayer } from '../components/StreamPlayer';
 import { PTZControls } from '../components/PTZControls';
@@ -13,11 +12,10 @@ export const SystemDetail = () => {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const { data: system, isLoading, isError, error } = useSystem(id);
-    const { data: cameraPreviews } = useCameraPreviews(id);
+    const { data: cameraPreviews, recordingAddress } = useCameraPreviews(id);
 
     const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
 
-    const modules = system?.loadedModules || [];
     const previews = cameraPreviews || [];
 
     useEffect(() => {
@@ -30,27 +28,6 @@ export const SystemDetail = () => {
             }
         }
     }, [previews, searchParams]);
-
-    const getRecordingModule = (): PlaceModule | undefined => {
-        return modules.filter(m => m.name === 'Recording')[0];
-    };
-
-    const getRecordingModuleAddress = (): string | null => {
-        const recordingModule = getRecordingModule();
-        if (!recordingModule) return null;
-
-        if (recordingModule.ip) return recordingModule.ip;
-
-        if (recordingModule.uri) {
-            try {
-                return new URL(recordingModule.uri).hostname;
-            } catch {
-                return null;
-            }
-        }
-
-        return null;
-    };
 
     const getSelectedPreview = (): CameraPreview | undefined => {
         return previews.find(p => p.channelId === selectedChannelId);
@@ -91,8 +68,6 @@ export const SystemDetail = () => {
     }
 
     const selectedPreview = getSelectedPreview();
-    const recordingModule = getRecordingModule();
-    const recordingAddress = getRecordingModuleAddress();
 
     return (
         <div className="h-full flex flex-col">
@@ -119,7 +94,7 @@ export const SystemDetail = () => {
 
             <div className="flex-1 overflow-y-auto p-6">
                 <div className="space-y-6">
-                    {previews.length > 0 && recordingModule && recordingAddress && (
+                    {previews.length > 0 && recordingAddress && (
                         <>
                             <div className="flex flex-col lg:flex-row gap-6">
                                 {selectedChannelId && (

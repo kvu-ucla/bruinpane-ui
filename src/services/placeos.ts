@@ -1,4 +1,5 @@
 import type { PlaceSystem, PlaceModule } from '@placeos/ts-client';
+import type { Observable } from 'rxjs';
 import { getModule, querySystems, showModule, showSystem } from '@placeos/ts-client';
 import { firstValueFrom } from 'rxjs';
 import { SYSTEM_FEATURE } from '../models';
@@ -15,7 +16,6 @@ export const getSystemsPage = async ({ limit, offset }: SystemsPageParams): Prom
       offset,
       features: SYSTEM_FEATURE.BruinCast,
     }));
-
     return {
       data: response?.data ?? [],
       total: response?.total ?? 0,
@@ -46,13 +46,26 @@ export const getModuleById = async (id: string): Promise<PlaceModule | null> => 
 
 export const getSystemModules = async (moduleIds: Array<string>): Promise<Array<PlaceModule>> => {
   try {
-    const modulePromises = moduleIds.map(id => getModuleById(id));
-    const modules = await Promise.all(modulePromises);
+    const modules = await Promise.all(moduleIds.map(id => getModuleById(id)));
     return modules.filter((m): m is PlaceModule => m !== null);
   } catch (error) {
     console.error('Failed to fetch system modules:', error);
     return [];
   }
+};
+
+export const bindModuleStatus = <T>(
+  systemId: string,
+  moduleName: string,
+  statusKey: string
+): { observable: Observable<T>; unbind: () => void } => {
+  const module = getModule(systemId, moduleName);
+  const binding = module.binding(statusKey);
+  binding.bind();
+  return {
+    observable: binding.listen() as Observable<T>,
+    unbind: () => binding.unbind(),
+  };
 };
 
 export const executePTZCommand = async (
