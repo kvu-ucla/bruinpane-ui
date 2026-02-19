@@ -1,20 +1,21 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 
-import type { PlaceAuthOptions } from "@placeos/ts-client";
-import { logout, PlaceUser, setup, showUser } from "@placeos/ts-client";
+import type { PlaceAuthOptions, PlaceUser } from "@placeos/ts-client";
+import { logout, setup, showUser } from "@placeos/ts-client";
 import { lastValueFrom } from "rxjs";
 
-interface AuthData {
+type AuthData = {
   user: PlaceUser | null;
   isAuthenticated: boolean;
   loading: boolean;
   logOut: () => void;
-}
+};
 
 // Create the context
 const AuthContext = createContext<AuthData | null>(null);
 
-export interface PlaceSettings {
+export type PlaceSettings = {
   /** Protocol used by the application server */
   protocol?: "http:" | "https:";
   /** Domain that the API server lies  */
@@ -31,12 +32,12 @@ export interface PlaceSettings {
   mock: boolean;
 
   storage?: "session" | "local";
-}
+};
 
 /**
  * Initialise the PlaceOS API library
  */
-function setupPlace(settings: PlaceSettings): Promise<void> {
+const setupPlace = (settings: PlaceSettings): Promise<void> => {
   const protocol = settings.protocol || location.protocol;
   const host = settings.domain || location.hostname;
   const port = settings.port || location.port;
@@ -67,11 +68,13 @@ function setupPlace(settings: PlaceSettings): Promise<void> {
     );
   }
   return setup(config);
-}
+};
 
 // --- The Auth Provider ---
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+type AuthProviderProps = { children: ReactNode };
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<PlaceUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true); // Crucial for the initial load

@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { PlaceModule } from '@placeos/ts-client';
+import type { PlaceModule } from '@placeos/ts-client';
 import { useSystem, useCameraPreviews } from '../hooks/useSystems';
-import StreamPlayer from '../components/StreamPlayer';
-import PTZControls from '../components/PTZControls';
-import CameraSelector from '../components/CameraSelector';
-import { CameraPreview } from '../types';
+import { StreamPlayer } from '../components/StreamPlayer';
+import { PTZControls } from '../components/PTZControls';
+import { CameraSelector } from '../components/CameraSelector';
+import type { CameraPreview } from '../types';
 
-export default function SystemDetail() {
+export const SystemDetail = () => {
     const { id } = useParams<{ id: string }>();
     const [searchParams, setSearchParams] = useSearchParams();
 

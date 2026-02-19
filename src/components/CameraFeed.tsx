@@ -1,11 +1,11 @@
 import { Video } from 'lucide-react';
-import { ModuleData } from '../models';
+import type { PlaceModule } from '@placeos/ts-client';
 
-interface CameraFeedProps {
-  selectedModule?: ModuleData;
-}
+type CameraFeedProps = {
+  selectedModule?: PlaceModule;
+};
 
-export default function CameraFeed({ selectedModule }: CameraFeedProps) {
+export const CameraFeed = ({ selectedModule }: CameraFeedProps) => {
   if (!selectedModule) {
     return (
       <div className="card bg-base-200">
@@ -31,20 +31,16 @@ export default function CameraFeed({ selectedModule }: CameraFeedProps) {
                 <p className="text-base-content/60 font-medium">
                   MPEG-TS Stream Player
                 </p>
-                {selectedModule && (
-                  <>
-                    <p className="text-sm text-base-content/40 mt-2">
-                      Camera: {selectedModule.custom_name || selectedModule.name}
-                    </p>
-                    <p className="text-xs text-base-content/30 mt-1 font-mono">
-                      Module ID: {selectedModule.id}
-                    </p>
-                    {selectedModule.ip && (
-                      <p className="text-xs text-base-content/30 mt-1">
-                        IP: {selectedModule.ip}
-                      </p>
-                    )}
-                  </>
+                <p className="text-sm text-base-content/40 mt-2">
+                  Camera: {selectedModule.custom_name || selectedModule.name}
+                </p>
+                <p className="text-xs text-base-content/30 mt-1 font-mono">
+                  Module ID: {selectedModule.id}
+                </p>
+                {selectedModule.ip && (
+                  <p className="text-xs text-base-content/30 mt-1">
+                    IP: {selectedModule.ip}
+                  </p>
                 )}
               </div>
             </div>

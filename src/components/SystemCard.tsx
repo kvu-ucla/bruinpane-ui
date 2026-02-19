@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
-import { SystemWithModules } from '../types';
-import CameraPreviewGrid from './CameraPreviewGrid';
+import type { SystemWithModules } from '../types';
+import { CameraPreviewGrid } from './CameraPreviewGrid';
 
-interface SystemCardProps {
+type SystemCardProps = {
     system: SystemWithModules;
-}
+};
 
-export default function SystemCard({ system }: SystemCardProps) {
+export const SystemCard = ({ system }: SystemCardProps) => {
     const hasCameras = system.camera_previews && system.camera_previews.length > 0;
 
     return (
@@ -15,7 +15,7 @@ export default function SystemCard({ system }: SystemCardProps) {
                 <div className="flex gap-4">
                     {hasCameras && (
                         <CameraPreviewGrid
-                            previews={system.camera_previews!}
+                            previews={system.camera_previews ?? []}
                             systemId={system.id}
                         />
                     )}

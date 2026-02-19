@@ -1,28 +1,26 @@
-import { PlaceModule } from '@placeos/ts-client';
+import type { PlaceModule } from '@placeos/ts-client';
 
-export interface CameraPreview {
+export type CameraPreview = {
     module: string;
     url: string;
     label: string;       // "Professor View", "Learner View"
     channelId: string;   // "2", "4" (used for both preview and streaming)
     cameraModuleReference: string | null; // e.g., "Camera_1", "Camera_2"
-}
+};
 
-export interface ChannelCameraMap {
-    [channelId: string]: string; // channelId → module reference name e.g. "Camera_1"
-}
+export type ChannelCameraMap = Record<string, string>;
 
-export interface SystemWithPreviews {
+export type SystemWithPreviews = {
     id: string;
     name: string;
     display_name?: string;
-    modules?: readonly string[];
-    camera_previews?: CameraPreview[];
-    features?: string[];
-    zones?: string[];
-    [key: string]: any;
-}
+    modules?: ReadonlyArray<string>;
+    camera_previews?: Array<CameraPreview>;
+    features?: Array<string>;
+    zones?: ReadonlyArray<string>;
+    [key: string]: unknown;
+};
 
-export interface SystemWithModules extends SystemWithPreviews {
-    loadedModules?: PlaceModule[];
-}
+export type SystemWithModules = SystemWithPreviews & {
+    loadedModules?: Array<PlaceModule>;
+};

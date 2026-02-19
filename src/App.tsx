@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Routes, Route, Navigate, HashRouter } from 'react-router-dom';
-import Layout from './components/Layout';
-import SystemsList from './pages/SystemsList';
-import SystemDetail from './pages/SystemDetail';
-import PlaceholderPage from './pages/PlaceholderPage';
+import { Layout } from './components/Layout';
+import { SystemsList } from './pages/SystemsList';
+import { SystemDetail } from './pages/SystemDetail';
+import { PlaceholderPage } from './pages/PlaceholderPage';
 import { useAuth } from "./AuthContext.tsx";
 
 // Create query client
@@ -19,8 +19,10 @@ const queryClient = new QueryClient({
     },
 });
 
-function App() {
-    const { isAuthenticated, loading } = useAuth()!;
+export const App = () => {
+    const authContext = useAuth();
+    if (!authContext) return null;
+    const { isAuthenticated, loading } = authContext;
 
     if (loading) {
         return (
@@ -62,4 +64,3 @@ function App() {
     );
 }
 
-export default App;

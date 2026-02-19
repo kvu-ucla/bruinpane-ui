@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { Home } from 'lucide-react';
 import { executeCameraCommand } from '../services/placeos';
-import { ModuleData } from '../models';
+import type { PlaceModule } from '@placeos/ts-client';
 
-interface PTZControlsProps {
+type PTZControlsProps = {
   systemId: string;
   cameraModule: string;
-  moduleInfo?: ModuleData;
-}
+  moduleInfo?: PlaceModule;
+};
 
-export default function PTZControls({ systemId, cameraModule, moduleInfo }: PTZControlsProps) {
+export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsProps) => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [joystickPosition, setJoystickPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -22,7 +22,7 @@ export default function PTZControls({ systemId, cameraModule, moduleInfo }: PTZC
   const lastCommandRef = useRef<string>('');
   const lastZoomCommandRef = useRef<string>('');
 
-  const executeCommand = async (method: string, args: any[] = []) => {
+  const executeCommand = async (method: string, args: Array<unknown> = []) => {
     try {
       await executeCameraCommand(systemId, cameraModule, method, args);
     } catch (error) {

@@ -1,10 +1,10 @@
 import { Construction } from 'lucide-react';
 
-interface PlaceholderPageProps {
+type PlaceholderPageProps = {
   title: string;
-}
+};
 
-export default function PlaceholderPage({ title }: PlaceholderPageProps) {
+export const PlaceholderPage = ({ title }: PlaceholderPageProps) => {
   return (
     <div className="h-full flex items-center justify-center">
       <div className="text-center">

@@ -1,24 +1,26 @@
 import { useEffect, useState } from 'react';
-import { CameraPreview } from '../types';
+import type { CameraPreview } from '../types';
 
-interface CameraSelectorProps {
-    cameraPreviews: CameraPreview[];
+type CameraSelectorProps = {
+    cameraPreviews: ReadonlyArray<CameraPreview>;
     selectedCamera: string | null;    // channelId
     onCameraSelect: (channelId: string) => void;
-}
+};
 
-export default function CameraSelector({
+const REFRESH_INTERVAL_MS = 3000;
+
+export const CameraSelector = ({
                                            cameraPreviews,
                                            selectedCamera,
                                            onCameraSelect,
-                                       }: CameraSelectorProps) {
+                                       }: CameraSelectorProps) => {
     const [refreshKey, setRefreshKey] = useState(0);
     const count = cameraPreviews.length;
 
     useEffect(() => {
         const interval = setInterval(() => {
             setRefreshKey(prev => prev + 1);
-        }, 3000);
+        }, REFRESH_INTERVAL_MS);
 
         return () => clearInterval(interval);
     }, []);

@@ -1,37 +1,12 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
-import {
-  Monitor,
-  // Box,
-  // MapPin,
-  // Wrench,
-  // FolderGit2,
-  // Zap,
-  // Bell,
-  // BarChart3,
-  // Users,
-  // Server,
-  // Settings,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
-// import ConnectionStatus from './ConnectionStatus';
+import { Monitor, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const navigationItems = [
+const NAVIGATION_ITEMS = [
   { name: 'Systems', path: '/systems', icon: Monitor },
-  // { name: 'Modules', path: '/modules', icon: Box },
-  // { name: 'Zones', path: '/zones', icon: MapPin },
-  // { name: 'Drivers', path: '/drivers', icon: Wrench },
-  // { name: 'Repositories', path: '/repositories', icon: FolderGit2 },
-  // { name: 'Triggers', path: '/triggers', icon: Zap },
-  // { name: 'Alerts', path: '/alerts', icon: Bell },
-  // { name: 'Metrics', path: '/metrics', icon: BarChart3 },
-  // { name: 'Users', path: '/users', icon: Users },
-  // { name: 'Domains', path: '/domains', icon: Server },
-  // { name: 'Manage Instance', path: '/manage', icon: Settings },
-];
+] as const;
 
-export default function Layout() {
+export const Layout = () => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -59,7 +34,7 @@ export default function Layout() {
 
         <nav className={`flex-1 overflow-y-auto ${isCollapsed ? 'px-2 py-4' : 'p-4'}`}>
           <ul className="nav-menu space-y-1">
-            {navigationItems.map((item) => {
+            {NAVIGATION_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path ||
                              location.pathname.startsWith(item.path + '/');
@@ -99,12 +74,8 @@ export default function Layout() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto flex flex-col">
-        <div className="border-b border-base-300 px-6 py-3 flex items-center justify-end">
-        </div>
-        <div className="flex-1 overflow-auto">
-          <Outlet />
-        </div>
+      <main className="flex-1 overflow-auto">
+        <Outlet />
       </main>
     </div>
   );

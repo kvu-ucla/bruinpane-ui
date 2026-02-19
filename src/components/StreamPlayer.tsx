@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import mpegts from 'mpegts.js';
 
-interface PlayerConfig {
+type PlayerConfig = {
     type: string;
     isLive: boolean;
     url: string;
-}
+};
 
-interface PlayerOptions {
+type PlayerOptions = {
     enableWorker: boolean;
     enableStashBuffer: boolean;
     stashInitialSize: number;
@@ -20,22 +20,22 @@ interface PlayerOptions {
     autoCleanupSourceBuffer: boolean;
     autoCleanupMaxBackwardDuration: number;
     autoCleanupMinBackwardDuration: number;
-}
+};
 
-interface StreamPlayerProps {
+type StreamPlayerProps = {
     systemId: string;
     recordingModuleIp: string;
     channelId: string | null;
-}
+};
 
 const DOMAIN = 'placeos-prod.avit.it.ucla.edu';
 
-function StreamPlayer({ systemId, recordingModuleIp, channelId }: StreamPlayerProps): JSX.Element {
+export const StreamPlayer = ({ systemId, recordingModuleIp, channelId }: StreamPlayerProps) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const playerRef = useRef<mpegts.Player | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [status, setStatus] = useState<string>('Loading...');
-    const [latency, setLatency] = useState<number>(0);
+    const [status, setStatus] = useState('Loading...');
+    const [latency, setLatency] = useState(0);
     const [isBuffering, setIsBuffering] = useState(false);
 
     useEffect(() => {
@@ -95,9 +95,12 @@ function StreamPlayer({ systemId, recordingModuleIp, channelId }: StreamPlayerPr
                 setError(null);
             });
 
-            player.on(mpegts.Events.ERROR, (err: any) => {
+            player.on(mpegts.Events.ERROR, (err: unknown) => {
                 console.error('Stream error:', err);
-                setError(`Error: ${err.type || 'Unknown error'}`);
+                const errType = err !== null && typeof err === 'object' && 'type' in err
+                    ? String((err as Record<string, unknown>).type)
+                    : 'Unknown error';
+                setError(`Error: ${errType}`);
             });
 
             // Monitor buffering events
@@ -202,4 +205,3 @@ function StreamPlayer({ systemId, recordingModuleIp, channelId }: StreamPlayerPr
     );
 }
 
-export default StreamPlayer;

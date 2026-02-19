@@ -1,57 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { getSystems, getSystemModules } from '../services/placeos';
-import { generateCameraPreviews } from '../utils/cameraUtils';
-import SystemCard from '../components/SystemCard';
-import { SystemWithModules } from '../types';
+import { useInfiniteSystems } from '../hooks/useSystems';
+import { SystemCard } from '../components/SystemCard';
 
-export default function SystemsList() {
-    const [systems, setSystems] = useState<SystemWithModules[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+export const SystemsList = () => {
     const [searchQuery, setSearchQuery] = useState('');
+    const { data, isLoading, isError, error } = useInfiniteSystems();
 
-    useEffect(() => {
-        void loadSystems();
-    }, []);
-
-    const loadSystems = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const data = await getSystems();
-
-            const systemsWithPreviewsAndModules = await Promise.all(
-                data.map(async (system): Promise<SystemWithModules> => {
-                    if (!system.modules || system.modules.length === 0) {
-                        return { ...system, loadedModules: [] };
-                    }
-
-                    try {
-                        const modules = await getSystemModules([...system.modules]);
-                        const previews = await generateCameraPreviews(system.id, modules);
-
-                        return {
-                            ...system,
-                            camera_previews: previews.length > 0 ? previews : undefined,
-                            loadedModules: modules
-                        };
-                    } catch (err) {
-                        console.error(`Failed to load modules for system ${system.id}:`, err);
-                        return { ...system, loadedModules: [] };
-                    }
-                })
-            );
-
-            setSystems(systemsWithPreviewsAndModules);
-        } catch (err) {
-            console.error('Error loading systems:', err);
-            setError(err instanceof Error ? err.message : 'Failed to load systems');
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    const systems = data?.pages.flatMap(page => page.systems) ?? [];
     const filteredSystems = systems.filter(system =>
         system.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         system.id?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -72,7 +28,7 @@ export default function SystemsList() {
                         />
                     </div>
                 </div>
-                {!loading && (
+                {!isLoading && (
                     <div className="mt-2 text-sm text-base-content/60">
                         {filteredSystems.length} items
                     </div>
@@ -80,25 +36,25 @@ export default function SystemsList() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
-                {loading && (
+                {isLoading && (
                     <div className="flex items-center justify-center h-64">
                         <span className="loading loading-spinner loading-lg"></span>
                     </div>
                 )}
 
-                {error && (
+                {isError && (
                     <div className="alert alert-error">
-                        <span>{error}</span>
+                        <span>{error instanceof Error ? error.message : 'Failed to load systems'}</span>
                     </div>
                 )}
 
-                {!loading && !error && filteredSystems.length === 0 && (
+                {!isLoading && !isError && filteredSystems.length === 0 && (
                     <div className="text-center py-12 text-base-content/60">
                         {searchQuery ? 'No systems found matching your search' : 'No systems available'}
                     </div>
                 )}
 
-                {!loading && !error && filteredSystems.length > 0 && (
+                {!isLoading && !isError && filteredSystems.length > 0 && (
                     <div className="space-y-2">
                         {filteredSystems.map((system) => (
                             <SystemCard key={system.id} system={system} />

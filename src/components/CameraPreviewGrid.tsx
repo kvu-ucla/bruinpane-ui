@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CameraPreview } from '../types';
+import type { CameraPreview } from '../types';
 
-interface CameraPreviewGridProps {
-    previews: CameraPreview[];
+type CameraPreviewGridProps = {
+    previews: ReadonlyArray<CameraPreview>;
     systemId: string;
-}
+};
 
-export default function CameraPreviewGrid({ previews, systemId }: CameraPreviewGridProps) {
+const REFRESH_INTERVAL_MS = 3000;
+
+export const CameraPreviewGrid = ({ previews, systemId }: CameraPreviewGridProps) => {
     const [refreshKey, setRefreshKey] = useState(0);
     const displayedPreviews = previews.slice(0, 3);
     const remainingCount = previews.length - 3;
@@ -15,7 +17,7 @@ export default function CameraPreviewGrid({ previews, systemId }: CameraPreviewG
     useEffect(() => {
         const interval = setInterval(() => {
             setRefreshKey(prev => prev + 1);
-        }, 3000); // Refresh every 3 seconds
+        }, REFRESH_INTERVAL_MS);
 
         return () => clearInterval(interval);
     }, []);
@@ -23,9 +25,9 @@ export default function CameraPreviewGrid({ previews, systemId }: CameraPreviewG
     return (
         <div className="flex-shrink-0">
             <div className="flex gap-2">
-                {displayedPreviews.map((preview, idx) => (
+                {displayedPreviews.map((preview) => (
                     <Link
-                        key={idx}
+                        key={preview.channelId}
                         to={`/systems/${systemId}?channel=${encodeURIComponent(preview.channelId)}`}
                         className="w-48 h-48 rounded-lg overflow-hidden bg-base-300 relative group hover:ring-4 hover:ring-primary transition-all"
                     >

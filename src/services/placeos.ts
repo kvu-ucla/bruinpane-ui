@@ -1,26 +1,27 @@
-import { querySystems, showModule, showSystem, PlaceSystem, PlaceModule } from '@placeos/ts-client';
+import type { PlaceSystem, PlaceModule } from '@placeos/ts-client';
+import { querySystems, showModule, showSystem } from '@placeos/ts-client';
 import { firstValueFrom } from 'rxjs';
-import { SystemFeature } from '../models';
+import { SYSTEM_FEATURE } from '../models';
 
+type SystemsPageParams = {
+  limit: number;
+  offset: number;
+};
 
-export const getSystems = async (): Promise<PlaceSystem[]> => {
+export const getSystemsPage = async ({ limit, offset }: SystemsPageParams): Promise<{ data: Array<PlaceSystem>; total: number }> => {
   try {
-    const response = await firstValueFrom(querySystems({ 
-      limit: 500, 
-      features: `${SystemFeature.BruinCast}`}));
-    
-    console.log("Query systems response: ", response);
+    const response = await firstValueFrom(querySystems({
+      limit,
+      offset,
+      features: SYSTEM_FEATURE.BruinCast,
+    }));
 
-    const systemsArray = response?.data || [];
-
-    if (!Array.isArray(systemsArray) || systemsArray.length === 0) {
-      return [];
-    }
-    
-    console.log("Filtered systems response: ", systemsArray);
-    return systemsArray;
+    return {
+      data: response?.data ?? [],
+      total: response?.total ?? 0,
+    };
   } catch (error) {
-    console.error('Failed to fetch systems:', error);
+    console.error('Failed to fetch systems page:', error);
     throw error;
   }
 };
@@ -43,7 +44,7 @@ export const getModuleById = async (id: string): Promise<PlaceModule | null> => 
   }
 };
 
-export const getSystemModules = async (moduleIds: string[]): Promise<PlaceModule[]> => {
+export const getSystemModules = async (moduleIds: Array<string>): Promise<Array<PlaceModule>> => {
   try {
     const modulePromises = moduleIds.map(id => getModuleById(id));
     const modules = await Promise.all(modulePromises);
@@ -54,7 +55,7 @@ export const getSystemModules = async (moduleIds: string[]): Promise<PlaceModule
   }
 };
 
-export const executeCameraCommand = (module: string, camera: string, method: string, args: any[]) => {
+export const executeCameraCommand = (module: string, camera: string, method: string, args: Array<unknown>) => {
   console.log(`Executing camera ${camera} with ${method}`);
   console.log(`Executing module ${module} with ${args}`);
 }

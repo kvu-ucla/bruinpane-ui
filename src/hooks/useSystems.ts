@@ -1,14 +1,11 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { querySystems } from '@placeos/ts-client';
-import { firstValueFrom } from 'rxjs';
-import { getSystemById, getSystemModules } from '../services/placeos';
+import { getSystemById, getSystemModules, getSystemsPage } from '../services/placeos';
 import { generateCameraPreviews } from '../utils/cameraUtils';
-import { SystemWithModules } from '../types';
+import type { SystemWithModules } from '../types';
 
 const PAGE_SIZE = 20;
 
-// Infinite query for systems list
-export function useInfiniteSystems() {
+export const useInfiniteSystems = () => {
     const queryClient = useQueryClient();
 
     return useInfiniteQuery({
@@ -16,17 +13,8 @@ export function useInfiniteSystems() {
         queryFn: async ({ pageParam = 0 }) => {
             console.log(`[useInfiniteSystems] Fetching page at offset ${pageParam}`);
 
-            const response = await firstValueFrom(
-                querySystems({
-                    limit: PAGE_SIZE,
-                    offset: pageParam,
-                    features: 'recording'
-                })
-            );
+            const { data: systemsArray, total } = await getSystemsPage({ limit: PAGE_SIZE, offset: pageParam });
 
-            const systemsArray = response?.data || [];
-
-            // Load modules and previews for each system
             const systemsWithData = await Promise.all(
                 systemsArray.map(async (system): Promise<SystemWithModules> => {
                     if (!system.modules || system.modules.length === 0) {
@@ -37,7 +25,6 @@ export function useInfiniteSystems() {
                         const modules = await getSystemModules([...system.modules]);
                         const previews = await generateCameraPreviews(system.id, modules);
 
-                        // Prefetch individual system and camera previews into cache
                         queryClient.setQueryData(['system', system.id], {
                             ...system,
                             loadedModules: modules,
@@ -60,8 +47,8 @@ export function useInfiniteSystems() {
             return {
                 systems: systemsWithData,
                 nextOffset: pageParam + PAGE_SIZE,
-                hasMore: pageParam + PAGE_SIZE < (response?.total || 0),
-                total: response?.total || 0
+                hasMore: pageParam + PAGE_SIZE < total,
+                total,
             };
         },
         getNextPageParam: (lastPage) =>
@@ -69,10 +56,9 @@ export function useInfiniteSystems() {
         initialPageParam: 0,
         staleTime: 5 * 60 * 1000,
     });
-}
+};
 
-// Single system query
-export function useSystem(id: string | undefined) {
+export const useSystem = (id: string | undefined) => {
     const queryClient = useQueryClient();
 
     return useQuery({
@@ -91,7 +77,6 @@ export function useSystem(id: string | undefined) {
             const modules = await getSystemModules([...system.modules]);
             const previews = await generateCameraPreviews(system.id, modules);
 
-            // Prefetch camera previews into cache
             queryClient.setQueryData(['cameraPreviews', id], previews);
 
             return {
@@ -103,10 +88,9 @@ export function useSystem(id: string | undefined) {
         enabled: !!id,
         staleTime: 5 * 60 * 1000,
     });
-}
+};
 
-// Camera previews query (can be used independently)
-export function useCameraPreviews(systemId: string | undefined) {
+export const useCameraPreviews = (systemId: string | undefined) => {
     return useQuery({
         queryKey: ['cameraPreviews', systemId],
         queryFn: async () => {
@@ -121,11 +105,9 @@ export function useCameraPreviews(systemId: string | undefined) {
             }
 
             const modules = await getSystemModules([...system.modules]);
-            const previews = await generateCameraPreviews(systemId, modules);
-
-            return previews;
+            return generateCameraPreviews(systemId, modules);
         },
         enabled: !!systemId,
         staleTime: 5 * 60 * 1000,
     });
-}
+};
