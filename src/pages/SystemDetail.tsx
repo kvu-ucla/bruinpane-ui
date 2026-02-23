@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { useSystem, useCameraPreviews } from '../hooks/useSystems';
+import {useSystem, useCameraPreviews, useIsRecording} from '../hooks/useSystems';
 import { StreamPlayer } from '../components/StreamPlayer';
 import { PTZControls } from '../components/PTZControls';
 import { CameraSelector } from '../components/CameraSelector';
@@ -11,7 +11,10 @@ export const SystemDetail = () => {
     const { id } = useParams<{ id: string }>();
     const [searchParams, setSearchParams] = useSearchParams();
 
+    if (!id) return null;
+
     const { data: system, isLoading, isError, error } = useSystem(id);
+    const isRecording = useIsRecording(id);
     const { data: cameraPreviews, recordingAddress } = useCameraPreviews(id);
 
     const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
@@ -77,7 +80,12 @@ export const SystemDetail = () => {
                         <ArrowLeft size={20} />
                     </Link>
                     <div className="flex-1">
-                        <h1 className="text-2xl font-bold">{system.display_name || system.name}</h1>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-bold">{system.display_name || system.name}</h1>
+                            {isRecording && (
+                                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                            )}
+                        </div>
                         {selectedPreview && (
                             <p className="text-sm text-base-content/60 mt-1">
                                 Viewing: {selectedPreview.label}

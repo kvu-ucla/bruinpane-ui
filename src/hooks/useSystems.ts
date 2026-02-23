@@ -29,10 +29,11 @@ export const useSystem = (id: string | undefined) => {
     });
 };
 
-export const useIsRecording = (systemId: string): boolean => {
+export const useIsRecording = (systemId: string | undefined): boolean => {
     const [isRecording, setIsRecording] = useState(false);
 
     useEffect(() => {
+        if (!systemId) return;
         const { observable, unbind } = bindModuleStatus<unknown>(systemId, 'Recording_1', 'active_recordings');
         const sub = observable.subscribe((value) => {
             setIsRecording(Array.isArray(value) && value.length > 0);
