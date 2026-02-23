@@ -4,7 +4,7 @@ import { PlaceOSProvider } from '../PlaceOSContext';
 
 export const ProtectedRoute = () => {
     const auth = useAuth();
-    if (auth?.isForbidden) return <Navigate to="/forbidden" replace />;
+    if (auth?.isForbidden) return <Navigate to="/unauthorized" replace />;
     return (
         <PlaceOSProvider>
             <Outlet />

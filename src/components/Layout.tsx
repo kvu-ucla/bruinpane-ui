@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { Monitor, ChevronLeft, ChevronRight } from 'lucide-react';
+import { UserProfile } from './UserProfile';
 
 const NAVIGATION_ITEMS = [
   { name: 'Systems', path: '/systems', icon: Monitor },
@@ -58,19 +59,7 @@ export const Layout = () => {
         </nav>
 
         <div className={`border-t border-base-300 ${isCollapsed ? 'p-3' : 'p-4'}`}>
-          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
-            <div className={`avatar placeholder ${isCollapsed ? 'tooltip tooltip-right' : ''}`} data-tip={isCollapsed ? 'KENNETH VU' : undefined}>
-              <div className="bg-neutral text-neutral-content rounded-full w-10">
-                <span className="text-xs">KV</span>
-              </div>
-            </div>
-            {!isCollapsed && (
-              <div className="flex-1">
-                <div className="text-sm font-medium">KENNETH VU</div>
-                <div className="text-xs text-base-content/60">Admin</div>
-              </div>
-            )}
-          </div>
+          <UserProfile isCollapsed={isCollapsed} />
         </div>
       </aside>
 

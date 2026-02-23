@@ -5,7 +5,7 @@ import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SystemsList } from './pages/SystemsList';
 import { SystemDetail } from './pages/SystemDetail';
-import { ForbiddenPage } from './pages/ForbiddenPage';
+import { UnauthorizedPage } from './pages/UnauthorizedPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { useAuth } from "./AuthContext.tsx";
 
@@ -37,7 +37,7 @@ export const App = () => {
         <QueryClientProvider client={queryClient}>
             <HashRouter>
                 <Routes>
-                    <Route path="/forbidden" element={<ForbiddenPage />} />
+                    <Route path="/unauthorized" element={<UnauthorizedPage />} />
                     <Route path="/" element={<Layout />}>
                         {isAuthenticated && (
                             <Route element={<ProtectedRoute />}>
