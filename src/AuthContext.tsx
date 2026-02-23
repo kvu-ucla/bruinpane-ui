@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 import type { PlaceAuthOptions, PlaceUser } from "@placeos/ts-client";
-import { logout, setup, showUser } from "@placeos/ts-client";
+import { logout, setup, currentUser } from "@placeos/ts-client";
 import { lastValueFrom } from "rxjs";
 import { AuthorizedGroup } from "./models";
 
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           local_login: false,
           mock: false,
         });
-        const user = await lastValueFrom(showUser("current"));
+        const user = await lastValueFrom(currentUser());
         const authorized = user.groups?.some(g =>
             g === AuthorizedGroup.BruincastAdmin) ?? false;
         setUser(user);
