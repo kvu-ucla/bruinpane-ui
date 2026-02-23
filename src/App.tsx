@@ -2,8 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Routes, Route, Navigate, HashRouter } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { SystemsList } from './pages/SystemsList';
 import { SystemDetail } from './pages/SystemDetail';
+import { ForbiddenPage } from './pages/ForbiddenPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { useAuth } from "./AuthContext.tsx";
 
@@ -35,9 +37,10 @@ export const App = () => {
         <QueryClientProvider client={queryClient}>
             <HashRouter>
                 <Routes>
+                    <Route path="/forbidden" element={<ForbiddenPage />} />
                     <Route path="/" element={<Layout />}>
                         {isAuthenticated && (
-                            <>
+                            <Route element={<ProtectedRoute />}>
                                 <Route index element={<Navigate to="/systems" replace />} />
                                 <Route path="systems" element={<SystemsList />} />
                                 <Route path="systems/:id" element={<SystemDetail />} />
@@ -51,7 +54,7 @@ export const App = () => {
                                 <Route path="users" element={<PlaceholderPage title="Users" />} />
                                 <Route path="domains" element={<PlaceholderPage title="Domains" />} />
                                 <Route path="manage" element={<PlaceholderPage title="Manage Instance" />} />
-                            </>
+                            </Route>
                         )}
                     </Route>
                 </Routes>

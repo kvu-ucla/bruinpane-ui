@@ -4,10 +4,12 @@ import type { ReactNode } from "react";
 import type { PlaceAuthOptions, PlaceUser } from "@placeos/ts-client";
 import { logout, setup, showUser } from "@placeos/ts-client";
 import { lastValueFrom } from "rxjs";
+import { AuthorizedGroup } from "./models";
 
 type AuthData = {
   user: PlaceUser | null;
   isAuthenticated: boolean;
+  isForbidden: boolean;
   loading: boolean;
   logOut: () => void;
 };
@@ -73,6 +75,7 @@ type AuthProviderProps = { children: ReactNode };
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<PlaceUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isForbidden, setIsForbidden] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -86,8 +89,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           mock: false,
         });
         const user = await lastValueFrom(showUser("current"));
+        const authorized = user.groups?.some(g =>
+            g === AuthorizedGroup.BruincastAdmin) ?? false;
         setUser(user);
         setIsAuthenticated(true);
+        setIsForbidden(!authorized);
       } catch {
         setUser(null);
         setIsAuthenticated(false);
@@ -105,6 +111,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const value = {
     user,
     isAuthenticated,
+    isForbidden,
     loading,
     logOut,
   };
