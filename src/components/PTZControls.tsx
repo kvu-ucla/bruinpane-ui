@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Home } from 'lucide-react';
 import type { PlaceModule } from '@placeos/ts-client';
-import { executePTZCommand } from '../services/placeos';
-import { useAutoframe } from '../hooks/useSystems';
+import { useAutoframe, usePTZCommand } from '../PlaceOSContext';
 import { Joystick, JoystickDirection } from './Joystick';
 import { TeleController } from './TeleController';
 
@@ -19,6 +18,7 @@ type PTZControlsProps = {
 
 export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsProps) => {
   const [isExecuting, setIsExecuting] = useState(false);
+  const executePTZCommand = usePTZCommand();
   const isAutoframe = useAutoframe(systemId, cameraModule);
   const currentDirectionRef = useRef<JoystickDirection>(JoystickDirection.Stop);
   const currentZoomRef = useRef<'tele' | 'wide' | null>(null);

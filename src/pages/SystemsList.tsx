@@ -1,25 +1,29 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { useSystems } from '../hooks/useSystems';
+import { useAllRecordingStates, usePlaceOSSystems } from '../PlaceOSContext';
 import { SystemCard } from '../components/SystemCard';
 import { SystemCardSkeleton } from '../components/SystemCardSkeleton';
 
 export const SystemsList = () => {
     const [searchQuery, setSearchQuery] = useState('');
-    const { data, isLoading, isError, error } = useSystems();
+    const { data, isLoading, isError, error } = usePlaceOSSystems();
+    const recordingStates = useAllRecordingStates();
 
     const filteredSystems = (data ?? [])
         .filter(system =>
             system.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             system.id?.toLowerCase().includes(searchQuery.toLowerCase())
         )
-        .sort((a, b) =>
-            (a.display_name ?? a.name ?? '').localeCompare(
+        .sort((a, b) => {
+            const aRecording = recordingStates[a.id] ?? false;
+            const bRecording = recordingStates[b.id] ?? false;
+            if (aRecording !== bRecording) return aRecording ? -1 : 1;
+            return (a.display_name ?? a.name ?? '').localeCompare(
                 b.display_name ?? b.name ?? '',
                 undefined,
                 { sensitivity: 'base' }
-            )
-        );
+            );
+        });
 
     return (
         <div className="h-full flex flex-col">
@@ -29,7 +33,7 @@ export const SystemsList = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50" size={20} />
                         <input
                             type="text"
-                            placeholder="Search systems..."
+                            placeholder="Search rooms..."
                             className="input input-bordered w-full pl-10"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}

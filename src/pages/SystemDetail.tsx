@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import {useSystem, useCameraPreviews, useIsRecording} from '../hooks/useSystems';
+import { useSystem } from '../hooks/useSystems';
+import { useCameraState, useRecordingState } from '../PlaceOSContext';
 import { StreamPlayer } from '../components/StreamPlayer';
 import { PTZControls } from '../components/PTZControls';
 import { CameraSelector } from '../components/CameraSelector';
@@ -10,16 +11,11 @@ import type { CameraPreview } from '../types';
 export const SystemDetail = () => {
     const { id } = useParams<{ id: string }>();
     const [searchParams, setSearchParams] = useSearchParams();
-
-    if (!id) return null;
-
     const { data: system, isLoading, isError, error } = useSystem(id);
-    const isRecording = useIsRecording(id);
-    const { data: cameraPreviews, recordingAddress } = useCameraPreviews(id);
-
+    const isRecording = useRecordingState(id);
+    const { data: cameraPreviews, recordingAddress } = useCameraState(id);
     const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
-
-    const previews = cameraPreviews || [];
+    const previews = useMemo(() => cameraPreviews ?? [], [cameraPreviews]);
 
     useEffect(() => {
         if (previews.length > 0) {
@@ -41,6 +37,8 @@ export const SystemDetail = () => {
         setSelectedChannelId(channelId);
         setSearchParams({ channel: channelId });
     };
+
+    if (!id) return null;
 
     if (isLoading) {
         return (
