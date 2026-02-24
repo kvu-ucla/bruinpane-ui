@@ -1,10 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 import type { PlaceAuthOptions, PlaceUser } from "@placeos/ts-client";
 import { logout, setup, currentUser } from "@placeos/ts-client";
 import { lastValueFrom } from "rxjs";
-import { AuthorizedGroup } from "./models";
+import { AUTHORIZED_GROUP } from "./models";
 
 type AuthData = {
   user: PlaceUser | null;
@@ -14,7 +14,7 @@ type AuthData = {
   logOut: () => void;
 };
 
-const AuthContext = createContext<AuthData | null>(null);
+export const AuthContext = createContext<AuthData | null>(null);
 
 export type PlaceSettings = {
   /** Protocol used by the application server */
@@ -79,7 +79,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    window.debug = true;
     const checkAuth = async () => {
       try {
         await setupPlace({
@@ -90,7 +89,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         });
         const user = await lastValueFrom(currentUser());
         const authorized = user.groups?.some(g =>
-            g === AuthorizedGroup.BruincastAdmin) ?? false;
+            g === AUTHORIZED_GROUP.BruincastAdmin) ?? false;
         setUser(user);
         setIsAuthenticated(true);
         setIsForbidden(!authorized);
@@ -123,6 +122,3 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   );
 };
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};

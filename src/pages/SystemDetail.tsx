@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useSystem } from '../hooks/useSystems';
-import { useCameraState, useRecordingState } from '../PlaceOSContext';
+import { useCameraState, useRecordingState } from '../hooks/usePlaceOS';
 import { StreamPlayer } from '../components/StreamPlayer';
 import { PTZControls } from '../components/PTZControls';
 import { CameraSelector } from '../components/CameraSelector';

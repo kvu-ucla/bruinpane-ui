@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Home } from 'lucide-react';
 import type { PlaceModule } from '@placeos/ts-client';
-import { useAutoframe, usePTZCommand } from '../PlaceOSContext';
+import { useAutoframe, usePTZCommand } from '../hooks/usePlaceOS';
 import { Joystick, JoystickDirection } from './Joystick';
 import { TeleController } from './TeleController';
 

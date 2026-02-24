@@ -70,34 +70,18 @@ export const Joystick = ({ onDirectionChange }: JoystickProps) => {
       }
     }
 
-    console.log("[handleInput]", {
-      pointer: [clientX, clientY],
-      dx,
-      dy,
-      threshold,
-      newDirection,
-    });
-
     if (newDirection !== direction) {
       setDirection(newDirection);
-      console.log("[emit] onDirectionChange:", newDirection);
       onDirectionChange?.(newDirection);
     }
   };
 
   const stopInput = () => {
-    console.log("[stopInput] Pointer released. Emitting stop.");
     setDirection(JoystickDirection.Stop);
     onDirectionChange?.(JoystickDirection.Stop);
-    console.log("RELEASE WORKING!");
   };
 
   const startInput = (event: ReactPointerEvent<HTMLDivElement>) => {
-    console.log("[startInput] Pointer down:", {
-      x: event.clientX,
-      y: event.clientY,
-    });
-
     // Key line to retain pointer tracking even outside bounds
     event.currentTarget.setPointerCapture(event.pointerId);
 

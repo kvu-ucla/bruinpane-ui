@@ -1,10 +1,10 @@
-export enum AuthorizedGroup {
-    AvitSupport     = 'avit_support',
-    AvitEngineering = 'avit_engineering',
-    SignageAdmin     = 'signage_admin',
-    BruincastAdmin  = 'bruincast_admin',
-    AvitSolutions   = 'avit_solutions',
-}
+export const AUTHORIZED_GROUP = {
+    AvitSupport:     'avit_support',
+    AvitEngineering: 'avit_engineering',
+    SignageAdmin:     'signage_admin',
+    BruincastAdmin:  'bruincast_admin',
+    AvitSolutions:   'avit_solutions',
+} as const;
 
 export const SYSTEM_FEATURE = {
   Recording: 'recording',
@@ -18,4 +18,4 @@ export const SYSTEM_FEATURE = {
   AccessControl: 'access_control',
   Occupancy: 'occupancy',
   BruinCast: 'bruincast',
-} ;
+};

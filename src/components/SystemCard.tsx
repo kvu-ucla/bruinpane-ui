@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { PlaceSystem } from '@placeos/ts-client';
-import { useCameraState, useRecordingState } from '../PlaceOSContext';
+import { useCameraState, useRecordingState } from '../hooks/usePlaceOS';
 import { CameraPreviewGrid } from './CameraPreviewGrid';
 
 type SystemCardProps = {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { useAllRecordingStates, usePlaceOSSystems } from '../PlaceOSContext';
+import { useAllRecordingStates, usePlaceOSSystems } from '../hooks/usePlaceOS';
 import { SystemCard } from '../components/SystemCard';
 import { SystemCardSkeleton } from '../components/SystemCardSkeleton';
 
@@ -22,7 +22,7 @@ export const SystemsList = () => {
                 b.display_name ?? b.name ?? '',
                 undefined,
                 { sensitivity: 'base' }
-            );
+            )
         });
 
     return (

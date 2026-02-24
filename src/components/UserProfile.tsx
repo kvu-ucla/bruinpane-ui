@@ -1,4 +1,4 @@
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 type UserProfileProps = {
     isCollapsed: boolean;
@@ -16,8 +16,7 @@ const getRoleLabel = (sysAdmin?: boolean, support?: boolean): string => {
 };
 
 export const UserProfile = ({ isCollapsed }: UserProfileProps) => {
-    const auth = useAuth();
-    const user = auth?.user;
+    const { user } = useAuth();
 
     const initials = getInitials(user?.first_name, user?.last_name, user?.name);
     const role = getRoleLabel(user?.sys_admin, user?.support);

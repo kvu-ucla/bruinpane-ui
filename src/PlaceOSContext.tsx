@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { PlaceModule, PlaceSystem } from '@placeos/ts-client';
 import { getModule, querySystems, showModule } from '@placeos/ts-client';
@@ -32,17 +32,19 @@ type PlaceOSContextValue = {
     unregisterAutoframe: (systemId: string, cameraModule: string) => void;
 };
 
-const PlaceOSContext = createContext<PlaceOSContextValue | null>(null);
+export const SYSTEMS_QUERY_LIMIT = 500;
 
-const bindStatus = <T,>(
+export const PlaceOSContext = createContext<PlaceOSContextValue | null>(null);
+
+const bindStatus = <TValue,>(
     systemId: string,
     moduleName: string,
     statusKey: string
-): { observable: Observable<T>; unbind: () => void } => {
+): { observable: Observable<TValue>; unbind: () => void } => {
     const mod = getModule(systemId, moduleName);
     const binding = mod.binding(statusKey);
     binding.bind();
-    return { observable: binding.listen() as Observable<T>, unbind: () => binding.unbind() };
+    return { observable: binding.listen() as Observable<TValue>, unbind: () => binding.unbind() };
 };
 
 export const PlaceOSProvider = ({ children }: { children: ReactNode }) => {
@@ -122,7 +124,7 @@ export const PlaceOSProvider = ({ children }: { children: ReactNode }) => {
         const init = async () => {
             try {
                 const response = await firstValueFrom(querySystems({
-                    limit: 500,
+                    limit: SYSTEMS_QUERY_LIMIT,
                     features: SYSTEM_FEATURE.BruinCast,
                 }));
                 if (cancelled) return;
@@ -223,49 +225,3 @@ export const PlaceOSProvider = ({ children }: { children: ReactNode }) => {
     );
 };
 
-const usePlaceOS = () => {
-    const ctx = useContext(PlaceOSContext);
-    if (!ctx) throw new Error('usePlaceOS must be used within PlaceOSProvider');
-    return ctx;
-};
-
-export const usePlaceOSSystems = () => {
-    const { systems, systemsLoading, systemsError } = usePlaceOS();
-    return { data: systems, isLoading: systemsLoading, isError: !!systemsError, error: systemsError };
-};
-
-export const useRecordingState = (systemId: string | undefined): boolean => {
-    const { recordingStates } = usePlaceOS();
-    return systemId ? (recordingStates[systemId] ?? false) : false;
-};
-
-export const useAllRecordingStates = (): Record<string, boolean> => {
-    const { recordingStates } = usePlaceOS();
-    return recordingStates;
-};
-
-export const useCameraState = (systemId: string | undefined) => {
-    const { cameraStates } = usePlaceOS();
-    const state = systemId ? cameraStates[systemId] : undefined;
-    return {
-        data: state?.previews ?? [],
-        isLoading: state?.isLoading ?? true,
-        recordingAddress: state?.recordingAddress ?? null,
-    };
-};
-
-export const useAutoframe = (systemId: string, cameraModule: string): boolean | null => {
-    const { autoframeStates, registerAutoframe, unregisterAutoframe } = usePlaceOS();
-
-    useEffect(() => {
-        registerAutoframe(systemId, cameraModule);
-        return () => unregisterAutoframe(systemId, cameraModule);
-    }, [systemId, cameraModule, registerAutoframe, unregisterAutoframe]);
-
-    return autoframeStates[systemId]?.[cameraModule] ?? null;
-};
-
-export const usePTZCommand = () => {
-    const { executePTZCommand } = usePlaceOS();
-    return executePTZCommand;
-};

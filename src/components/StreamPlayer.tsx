@@ -91,19 +91,17 @@ export const StreamPlayer = ({ systemId, recordingModuleIp, channelId }: StreamP
             player.on(mpegts.Events.ERROR, (err: unknown) => {
                 console.error('Stream error:', err);
                 const errType = err !== null && typeof err === 'object' && 'type' in err
-                    ? String((err as Record<string, unknown>).type)
+                    ? String((err as { type: unknown }).type)
                     : 'Unknown error';
                 setError(`Error: ${errType}`);
             });
 
             video.addEventListener('waiting', () => {
-                console.log('Buffering...');
                 setIsBuffering(true);
                 setStatus('Buffering...');
             });
 
             video.addEventListener('playing', () => {
-                console.log('Playing');
                 setIsBuffering(false);
                 setStatus('Playing');
             });
@@ -117,7 +115,6 @@ export const StreamPlayer = ({ systemId, recordingModuleIp, channelId }: StreamP
             const playPromise = player.play();
             if (playPromise !== undefined) {
                 playPromise.catch(() => {
-                    console.log('Autoplay prevented, click play button');
                     setStatus('Click play to start');
                 });
             }
@@ -135,7 +132,6 @@ export const StreamPlayer = ({ systemId, recordingModuleIp, channelId }: StreamP
 
                 // Jump only when the buffer grows very large to avoid interrupting normal playback
                 if (bufferLength > 5.0 && !videoRef.current.paused) {
-                    console.log('Buffer very large, jumping to reduce latency');
                     videoRef.current.currentTime = bufferedEnd - 2.0;
                 }
             }

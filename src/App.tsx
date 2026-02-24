@@ -7,7 +7,7 @@ import { SystemsList } from './pages/SystemsList';
 import { SystemDetail } from './pages/SystemDetail';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
-import { useAuth } from "./AuthContext.tsx";
+import { useAuth } from './hooks/useAuth';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -21,9 +21,7 @@ const queryClient = new QueryClient({
 });
 
 export const App = () => {
-    const authContext = useAuth();
-    if (!authContext) return null;
-    const { isAuthenticated, loading } = authContext;
+    const { isAuthenticated, loading, isForbidden } = useAuth();
 
     if (loading) {
         return (
@@ -37,7 +35,7 @@ export const App = () => {
         <QueryClientProvider client={queryClient}>
             <HashRouter>
                 <Routes>
-                    <Route path="/unauthorized" element={<UnauthorizedPage />} />
+                    <Route path="/unauthorized" element={isAuthenticated && !isForbidden ? <Navigate to="/" replace /> : <UnauthorizedPage />} />
                     <Route path="/" element={<Layout />}>
                         {isAuthenticated && (
                             <Route element={<ProtectedRoute />}>
