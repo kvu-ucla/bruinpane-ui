@@ -19,6 +19,7 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
   const isAutoframe = useAutoframe(systemId, cameraModule);
   const currentZoomRef = useRef<'tele' | 'wide' | null>(null);
   const moveTimeout = useRef<NodeJS.Timeout | null>(null);
+  const lastJoystickSend = useRef<number>(0);
 
   const scheduleCommand = (command: CameraCommand) => {
     if (moveTimeout.current) clearTimeout(moveTimeout.current);
@@ -27,11 +28,14 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
     }, 50);
   };
 
+  const JOYSTICK_INTERVAL = 50;
+
   const handleJoystickMove = (x: number, y: number) => {
-    if (moveTimeout.current) clearTimeout(moveTimeout.current);
-    moveTimeout.current = setTimeout(() => {
+    const now = Date.now();
+    if (now - lastJoystickSend.current >= JOYSTICK_INTERVAL) {
+      lastJoystickSend.current = now;
       void executePTZCommand(systemId, cameraModule, 'joystick', [x, y]);
-    }, 50);
+    }
   };
 
   const handleZoomStart = (dir: 'tele' | 'wide') => {
