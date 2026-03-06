@@ -17,10 +17,15 @@ export type JoystickDirection =
     (typeof JoystickDirection)[keyof typeof JoystickDirection];
 
 type JoystickProps = {
-  onDirectionChange?: (dir: JoystickDirection) => void;
+    onMove?: (x: number, y: number) => void;
 };
 
-export const Joystick = ({ onDirectionChange }: JoystickProps) => {
+const normalizeAxis = (delta: number, radius: number, threshold: number): number => {
+    if (Math.abs(delta) < threshold) return 0;
+    return Math.max(-100, Math.min(100, Math.round((delta / radius) * 100)));
+};
+
+export const Joystick = ({ onMove }: JoystickProps) => {
   const joystickRef = useRef<HTMLDivElement>(null);
   const [direction, setDirection] = useState<JoystickDirection>(JoystickDirection.Stop);
 
@@ -33,14 +38,18 @@ export const Joystick = ({ onDirectionChange }: JoystickProps) => {
 
     const centerX = box.left + box.width / 2;
     const centerY = box.top + box.height / 2;
+    const radius = box.width / 2;
 
     const dx = clientX - centerX;
     const dy = clientY - centerY;
     const threshold = 30;
 
+    const x = normalizeAxis(dx, radius, threshold);
+    const y = normalizeAxis(-dy, radius, threshold);
+
+    // Derive direction for visual thumb positioning
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
-
     let newDirection: JoystickDirection = JoystickDirection.Stop;
 
     if (absDx > threshold || absDy > threshold) {
@@ -50,18 +59,10 @@ export const Joystick = ({ onDirectionChange }: JoystickProps) => {
       if (vertical && horizontal) {
         const combined = vertical + horizontal;
         switch (combined) {
-          case "upleft":
-            newDirection = JoystickDirection.UpLeft;
-            break;
-          case "upright":
-            newDirection = JoystickDirection.UpRight;
-            break;
-          case "downleft":
-            newDirection = JoystickDirection.DownLeft;
-            break;
-          case "downright":
-            newDirection = JoystickDirection.DownRight;
-            break;
+          case "upleft":    newDirection = JoystickDirection.UpLeft;    break;
+          case "upright":   newDirection = JoystickDirection.UpRight;   break;
+          case "downleft":  newDirection = JoystickDirection.DownLeft;  break;
+          case "downright": newDirection = JoystickDirection.DownRight; break;
         }
       } else if (vertical) {
         newDirection = vertical === "up" ? JoystickDirection.Up : JoystickDirection.Down;
@@ -70,15 +71,13 @@ export const Joystick = ({ onDirectionChange }: JoystickProps) => {
       }
     }
 
-    if (newDirection !== direction) {
-      setDirection(newDirection);
-      onDirectionChange?.(newDirection);
-    }
+    if (newDirection !== direction) setDirection(newDirection);
+    onMove?.(x, y);
   };
 
   const stopInput = () => {
     setDirection(JoystickDirection.Stop);
-    onDirectionChange?.(JoystickDirection.Stop);
+    onMove?.(0, 0);
   };
 
   const startInput = (event: ReactPointerEvent<HTMLDivElement>) => {

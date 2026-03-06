@@ -2,13 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { Home } from 'lucide-react';
 import type { PlaceModule } from '@placeos/ts-client';
 import { useAutoframe, usePTZCommand } from '../hooks/usePlaceOS';
-import { Joystick, JoystickDirection } from './Joystick';
+import { Joystick } from './Joystick';
 import { TeleController } from './TeleController';
 
-type CameraCommand = JoystickDirection | 'tele' | 'wide' | 'stop' | 'stop_zoom' | 'home';
-
-const isJoystickDirection = (value: CameraCommand): value is JoystickDirection =>
-    Object.values(JoystickDirection).includes(value as JoystickDirection);
+type CameraCommand = 'tele' | 'wide' | 'stop' | 'stop_zoom' | 'home';
 
 type PTZControlsProps = {
   systemId: string;
@@ -20,43 +17,26 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
   const [isExecuting, setIsExecuting] = useState(false);
   const executePTZCommand = usePTZCommand();
   const isAutoframe = useAutoframe(systemId, cameraModule);
-  const currentDirectionRef = useRef<JoystickDirection>(JoystickDirection.Stop);
   const currentZoomRef = useRef<'tele' | 'wide' | null>(null);
   const moveTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const executeCommand = async (command: CameraCommand) => {
-    try {
-      if (command === 'stop' || command === 'stop_zoom' || command === 'home') {
-        await executePTZCommand(systemId, cameraModule, command);
-      } else if (command === 'tele' || command === 'wide' || isJoystickDirection(command)) {
-        await executePTZCommand(systemId, cameraModule, 'move_all', [command]);
-      }
-    } catch (error) {
-      console.error('[PTZControls] Error executing command:', error);
-    }
-  };
-
   const scheduleCommand = (command: CameraCommand) => {
-    if (moveTimeout.current) {
-      clearTimeout(moveTimeout.current);
-    }
+    if (moveTimeout.current) clearTimeout(moveTimeout.current);
     moveTimeout.current = setTimeout(() => {
-      void executeCommand(command);
+      void executePTZCommand(systemId, cameraModule, command);
     }, 50);
   };
 
-  const handleDirectionChange = (newDir: JoystickDirection) => {
-    if (newDir !== currentDirectionRef.current) {
-      currentDirectionRef.current = newDir;
-      currentZoomRef.current = null;
-      scheduleCommand(newDir);
-    }
+  const handleJoystickMove = (x: number, y: number) => {
+    if (moveTimeout.current) clearTimeout(moveTimeout.current);
+    moveTimeout.current = setTimeout(() => {
+      void executePTZCommand(systemId, cameraModule, 'joystick', [x, y]);
+    }, 50);
   };
 
   const handleZoomStart = (dir: 'tele' | 'wide') => {
     if (dir !== currentZoomRef.current) {
       currentZoomRef.current = dir;
-      currentDirectionRef.current = JoystickDirection.Stop;
       scheduleCommand(dir);
     }
   };
@@ -70,7 +50,7 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
 
   const handleHome = () => {
     setIsExecuting(true);
-    executeCommand('home').finally(() => setIsExecuting(false));
+    void executePTZCommand(systemId, cameraModule, 'home').finally(() => setIsExecuting(false));
   };
 
   useEffect(() => {
@@ -190,7 +170,7 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
             onZoomStart={handleZoomStart}
             onZoomStop={handleZoomStop}
           />
-          <Joystick onDirectionChange={handleDirectionChange} />
+          <Joystick onMove={handleJoystickMove} />
         </div>
       </div>
 
