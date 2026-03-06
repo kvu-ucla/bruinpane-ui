@@ -7,6 +7,8 @@ import { TeleController } from './TeleController';
 
 type CameraCommand = 'tele' | 'wide' | 'stop' | 'stop_zoom' | 'home';
 
+const JOYSTICK_INTERVAL_MS = 80;
+
 type PTZControlsProps = {
   systemId: string;
   cameraModule: string;
@@ -19,7 +21,8 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
   const isAutoframe = useAutoframe(systemId, cameraModule);
   const currentZoomRef = useRef<'tele' | 'wide' | null>(null);
   const moveTimeout = useRef<NodeJS.Timeout | null>(null);
-  const lastJoystickSend = useRef<number>(0);
+  const joystickPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const loopRef = useRef<NodeJS.Timeout | null>(null);
 
   const scheduleCommand = (command: CameraCommand) => {
     if (moveTimeout.current) clearTimeout(moveTimeout.current);
@@ -28,14 +31,25 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
     }, 50);
   };
 
-  const JOYSTICK_INTERVAL = 50;
+  const stopLoop = () => {
+    if (loopRef.current) {
+      clearInterval(loopRef.current);
+      loopRef.current = null;
+    }
+  };
+
+  const startLoop = () => {
+    if (loopRef.current) return;
+    loopRef.current = setInterval(() => {
+      const { x, y } = joystickPos.current;
+      void executePTZCommand(systemId, cameraModule, 'joystick', [x, y]);
+      if (x === 0 && y === 0) stopLoop();
+    }, JOYSTICK_INTERVAL_MS);
+  };
 
   const handleJoystickMove = (x: number, y: number) => {
-    const now = Date.now();
-    if (now - lastJoystickSend.current >= JOYSTICK_INTERVAL) {
-      lastJoystickSend.current = now;
-      void executePTZCommand(systemId, cameraModule, 'joystick', [x, y]);
-    }
+    joystickPos.current = { x, y };
+    if (x !== 0 || y !== 0) startLoop();
   };
 
   const handleZoomStart = (dir: 'tele' | 'wide') => {
@@ -59,9 +73,8 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
 
   useEffect(() => {
     return () => {
-      if (moveTimeout.current) {
-        clearTimeout(moveTimeout.current);
-      }
+      if (moveTimeout.current) clearTimeout(moveTimeout.current);
+      if (loopRef.current) clearInterval(loopRef.current);
     };
   }, []);
 
