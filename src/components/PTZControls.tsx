@@ -5,8 +5,6 @@ import { useAutoframe, usePTZCommand } from '../hooks/usePlaceOS';
 import { Joystick } from './Joystick';
 import { TeleController } from './TeleController';
 
-type CameraCommand = 'tele' | 'wide' | 'stop' | 'stop_zoom' | 'home';
-
 const JOYSTICK_INTERVAL_MS = 80;
 
 type PTZControlsProps = {
@@ -19,17 +17,9 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
   const [isExecuting, setIsExecuting] = useState(false);
   const executePTZCommand = usePTZCommand();
   const isAutoframe = useAutoframe(systemId, cameraModule);
-  const currentZoomRef = useRef<'tele' | 'wide' | null>(null);
-  const moveTimeout = useRef<NodeJS.Timeout | null>(null);
+  const currentZoomRef = useRef<'in' | 'out' | null>(null);
   const joystickPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const loopRef = useRef<NodeJS.Timeout | null>(null);
-
-  const scheduleCommand = (command: CameraCommand) => {
-    if (moveTimeout.current) clearTimeout(moveTimeout.current);
-    moveTimeout.current = setTimeout(() => {
-      void executePTZCommand(systemId, cameraModule, command);
-    }, 50);
-  };
 
   const stopLoop = () => {
     if (loopRef.current) {
@@ -43,26 +33,30 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
     loopRef.current = setInterval(() => {
       const { x, y } = joystickPos.current;
       void executePTZCommand(systemId, cameraModule, 'joystick', [x, y]);
-      if (x === 0 && y === 0) stopLoop();
     }, JOYSTICK_INTERVAL_MS);
   };
 
   const handleJoystickMove = (x: number, y: number) => {
+    if (x === 0 && y === 0) {
+      stopLoop();
+      void executePTZCommand(systemId, cameraModule, 'joystick', [0, 0]);
+      return;
+    }
     joystickPos.current = { x, y };
-    if (x !== 0 || y !== 0) startLoop();
+    startLoop();
   };
 
-  const handleZoomStart = (dir: 'tele' | 'wide') => {
+  const handleZoomStart = (dir: 'in' | 'out') => {
     if (dir !== currentZoomRef.current) {
       currentZoomRef.current = dir;
-      scheduleCommand(dir);
+      void executePTZCommand(systemId, cameraModule, 'zoom', [dir]);
     }
   };
 
   const handleZoomStop = () => {
     if (currentZoomRef.current !== null) {
       currentZoomRef.current = null;
-      scheduleCommand('stop_zoom');
+      void executePTZCommand(systemId, cameraModule, 'zoom', ['stop']);
     }
   };
 
@@ -73,7 +67,6 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
 
   useEffect(() => {
     return () => {
-      if (moveTimeout.current) clearTimeout(moveTimeout.current);
       if (loopRef.current) clearInterval(loopRef.current);
     };
   }, []);
