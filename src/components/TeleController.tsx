@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 
-type ZoomDirection = "tele" | "wide";
+export type ZoomDirection = 'in' | 'out';
 
 type TeleControllerProps = {
     onZoomStart: (dir: ZoomDirection) => void;
@@ -29,9 +29,9 @@ export const TeleController = ({ onZoomStart, onZoomStop }: TeleControllerProps)
         let newZoom: ZoomDirection | null = null;
 
         if (percentage > center + deadZone) {
-            newZoom = "tele";
+            newZoom = 'in';
         } else if (percentage < center - deadZone) {
-            newZoom = "wide";
+            newZoom = 'out';
         }
 
         if (newZoom !== currentZoomRef.current) {

@@ -4,6 +4,7 @@ import type { PlaceModule } from '@placeos/ts-client';
 import { useAutoframe, usePTZCommand } from '../hooks/usePlaceOS';
 import { Joystick } from './Joystick';
 import { TeleController } from './TeleController';
+import type { ZoomDirection } from './TeleController';
 
 const JOYSTICK_INTERVAL_MS = 80;
 
@@ -17,7 +18,7 @@ export const PTZControls = ({ systemId, cameraModule, moduleInfo }: PTZControlsP
   const [isExecuting, setIsExecuting] = useState(false);
   const executePTZCommand = usePTZCommand();
   const isAutoframe = useAutoframe(systemId, cameraModule);
-  const currentZoomRef = useRef<'in' | 'out' | null>(null);
+  const currentZoomRef = useRef<ZoomDirection | null>(null);
   const joystickPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const loopRef = useRef<NodeJS.Timeout | null>(null);
 
