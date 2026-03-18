@@ -88,8 +88,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           mock: false,
         });
         const user = await lastValueFrom(currentUser());
-        const authorized = user.groups?.some(g =>
-            g === AUTHORIZED_GROUP.BruincastAdmin) ?? false;
+        const authorized = (Object.values(AUTHORIZED_GROUP) as Array<string>).some(group => user.groups?.includes(group) ?? false);
         setUser(user);
         setIsAuthenticated(true);
         setIsForbidden(!authorized);

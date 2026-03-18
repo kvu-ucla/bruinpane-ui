@@ -1,9 +1,6 @@
 export const AUTHORIZED_GROUP = {
-    AvitSupport:     'avit_support',
-    AvitEngineering: 'avit_engineering',
-    SignageAdmin:     'signage_admin',
-    BruincastAdmin:  'bruincast_admin',
-    AvitSolutions:   'avit_solutions',
+    BruinCastOperator: 'bruincast_operator',
+    BruincastAdmin:    'bruincast_admin',
 } as const;
 
 export const SYSTEM_FEATURE = {
