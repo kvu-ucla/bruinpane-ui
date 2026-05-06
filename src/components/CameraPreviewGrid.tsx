@@ -29,12 +29,12 @@ export const CameraPreviewGrid = ({ previews, systemId }: CameraPreviewGridProps
                     <Link
                         key={preview.channelId}
                         to={`/systems/${systemId}?channel=${encodeURIComponent(preview.channelId)}`}
-                        className="w-48 h-48 rounded-lg overflow-hidden bg-base-300 relative group hover:ring-4 hover:ring-primary transition-all"
+                        className="rounded-lg overflow-hidden bg-base-300 relative group hover:ring-4 hover:ring-primary transition-all"
                     >
                         <img
                             src={`${preview.url}&t=${refreshKey}`}
                             alt={preview.label}
-                            className="w-full h-full object-cover"
+                            className="aspect-video object-cover"
                         />
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
                             <div className="text-white text-sm font-medium">{preview.label}</div>
