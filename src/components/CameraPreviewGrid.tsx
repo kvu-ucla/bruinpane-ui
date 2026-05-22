@@ -36,7 +36,7 @@ export const CameraPreviewGrid = ({ previews, systemId }: CameraPreviewGridProps
                             alt={preview.label}
                             className="aspect-video object-cover"
                         />
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                        <div className="absolute bottom-0 left-0 right-0 bg-[linear-gradient(to_bottom,transparent_0%,black_52%)] p-3">
                             <div className="text-white text-sm font-medium">{preview.label}</div>
                         </div>
                     </Link>
